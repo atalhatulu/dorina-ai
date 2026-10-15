@@ -1,0 +1,24 @@
+# Python önbellek ve derleme dosyaları
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Sanal ortam klasörü
+.venv/
+venv/
+ENV/
+
+# Model ağırlıkları ve büyük veri setleri (GitHub boyut sınırları için)
+*.pt
+*.ckpt
+data/*.txt
+data/*.json
+*.tar.gz
+
+# IDE ve İşletim Sistemi dosyaları
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
