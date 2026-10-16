@@ -149,16 +149,16 @@ def generate_text(prompt, max_tokens=80, temperature=0.7, top_k=40, repetition_p
         if next_id.item() == enc.eot_token:
             break
             
-        # ChatML <|im_end|> durma kontrolü (oluşan son metin üzerinden)
-        curr_decoded = enc.decode(x[0].tolist())
-        if "<|im_end|>" in curr_decoded:
+        # ChatML <|im_end|> durma kontrolü (yeni üretilen kısımda)
+        new_text = enc.decode(x[0, len(input_ids):].tolist())
+        if "<|im_end|>" in new_text:
             break
             
-    full_output = enc.decode(x[0].tolist())
-    # Eğer çıktı içinde <|im_end|> varsa o noktada temizce kes
-    if "<|im_end|>" in full_output:
-        full_output = full_output.split("<|im_end|>")[0].strip()
-    return full_output
+    # Sadece yeni üretilen tokenları al
+    generated_text = enc.decode(x[0, len(input_ids):].tolist())
+    if "<|im_end|>" in generated_text:
+        generated_text = generated_text.split("<|im_end|>")[0].strip()
+    return generated_text
 
 @torch.no_grad()
 def predict_next_words(prompt, top_n=5):
@@ -225,8 +225,8 @@ def main():
             tokens = int(tok_input) if tok_input else 80
             
             print("\n⏳ Üretiliyor...\n" + "-" * 50)
-            output = generate_text(prompt, max_tokens=tokens, temperature=temp)
-            print(output)
+            continuation = generate_text(prompt, max_tokens=tokens, temperature=temp)
+            print(prompt + continuation)
             print("-" * 50)
             
         elif mode == "2":
@@ -247,15 +247,8 @@ def main():
                     break
                 chat_prompt = f"<|im_start|>user\n{user_msg}\n<|im_end|>\n<|im_start|>assistant\n"
                 print("\n🤖 Dorina: ", end="", flush=True)
-                full_reply = generate_text(chat_prompt, max_tokens=120, temperature=0.6, top_k=40)
-                # Sadece asistanın yanıt kısmını göster
-                if chat_prompt in full_reply:
-                    reply_clean = full_reply[len(chat_prompt):].strip()
-                else:
-                    reply_clean = full_reply.replace(chat_prompt, "").strip()
-                if "<|im_end|>" in reply_clean:
-                    reply_clean = reply_clean.split("<|im_end|>")[0].strip()
-                print(reply_clean)
+                reply = generate_text(chat_prompt, max_tokens=120, temperature=0.6, top_k=40)
+                print(reply)
             
         elif mode == "q":
             print("Görüşmek üzere!")
