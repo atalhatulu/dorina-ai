@@ -1,0 +1,11 @@
+{
+  "total_tokens": 50458803,
+  "train_tokens": 45412922,
+  "val_tokens": 5045881,
+  "dtype": "uint16",
+  "sources": {
+    "tinystories_tokens": 35458066,
+    "textbooks_tokens": 15000737
+  },
+  "tokenizer": "gpt2_bpe"
+}

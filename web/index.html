@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dorina AI · Canlı Nöral Telemetri</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#02060d;
+  --cyan:#5fd8ff;
+  --muted:#4a7a9b;
+  --emerald:#34d399;
+  --amber:#fbbf24;
+  --rose:#fb7185;
+  --purple:#c084fc;
+  --text:#cfefff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);user-select:none}
+body{
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+#net{display:block;width:100vw;height:100vh}
+
+.overlay{position:fixed;inset:0;pointer-events:none;z-index:5}
+.overlay::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(130% 95% at 50% 45%,transparent 42%,rgba(0,4,10,.84) 100%);
+}
+.overlay::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,
+    rgba(120,200,255,.022) 0px,
+    rgba(120,200,255,.022) 1px,
+    transparent 1px,transparent 3px);
+  mix-blend-mode:screen;opacity:.5;
+}
+
+.hud{
+  position:fixed;z-index:10;pointer-events:none;
+  font-size:.68rem;line-height:1.65;letter-spacing:.03em;
+}
+.hud-box{
+  background:rgba(4,15,25,.68);
+  border:1px solid rgba(95,216,255,.22);
+  border-radius:10px;padding:10px 14px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 25px rgba(0,50,110,.32),inset 0 0 22px rgba(0,80,140,.10);
+}
+.hud-box .k{color:var(--muted);font-weight:600}
+.hud-box .v{color:var(--cyan);font-weight:700}
+.hud-box .v.amber{color:var(--amber)}
+.hud-box .v.rose{color:var(--rose)}
+.hud-box .v.green{color:var(--emerald)}
+
+.title-line{
+  display:flex;align-items:center;gap:8px;
+  color:#8fd6ff;font-weight:700;letter-spacing:.16em;
+  font-size:.62rem;text-transform:uppercase;
+  text-shadow:0 0 12px rgba(95,216,255,.55);
+  margin-bottom:5px;
+}
+.title-line i{
+  width:6px;height:6px;border-radius:50%;background:#5fd8ff;
+  box-shadow:0 0 10px #5fd8ff;
+  animation:blink 2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.tl{top:18px;left:18px;max-width:380px}
+.tr{top:18px;right:18px;text-align:right;display:flex;flex-direction:column;gap:12px;align-items:flex-end}
+.bl{bottom:18px;left:18px}
+.br{bottom:18px;right:18px;text-align:right}
+
+/* Başlangıç Prompt & Canlı Metin Kutusu */
+.prompt-bar{
+  display:flex;gap:6px;margin-top:8px;pointer-events:auto;
+}
+.prompt-input{
+  flex:1;background:rgba(2,10,18,.85);
+  border:1px solid rgba(95,216,255,.28);
+  color:#fff;font-family:inherit;font-size:.64rem;
+  padding:5px 8px;border-radius:6px;outline:none;
+}
+.prompt-input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(95,216,255,.25)}
+
+.context-ribbon{
+  margin-top:7px;padding-top:6px;
+  border-top:1px solid rgba(95,216,255,.15);
+  font-size:.62rem;color:#9bc9e8;
+  max-height:54px;overflow-y:auto;line-height:1.45;
+  pointer-events:auto;
+}
+.context-ribbon b{color:var(--emerald);text-shadow:0 0 8px rgba(52,211,153,.5)}
+
+.controls{
+  display:flex;gap:6px;margin-top:7px;pointer-events:auto;flex-wrap:wrap;
+}
+.btn{
+  font-family:inherit;font-size:.64rem;font-weight:700;
+  letter-spacing:.04em;
+  background:rgba(6,24,40,.92);color:var(--text);
+  border:1px solid rgba(95,216,255,.24);
+  border-radius:7px;padding:6px 11px;
+  cursor:pointer;transition:.16s;white-space:nowrap;
+}
+.btn:hover{
+  border-color:var(--cyan);color:#fff;
+  box-shadow:0 0 16px rgba(95,216,255,.32);
+  transform:translateY(-1px);
+}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn.primary{
+  background:linear-gradient(135deg,rgba(95,216,255,.22),rgba(60,140,220,.22));
+  border-color:rgba(95,216,255,.55);
+}
+.btn.on{
+  background:linear-gradient(135deg,rgba(52,211,153,.24),rgba(95,216,255,.18));
+  border-color:var(--emerald);color:#fff;
+  box-shadow:0 0 18px rgba(52,211,153,.28);
+}
+
+.legend{
+  display:flex;flex-direction:column;gap:4px;
+  font-size:.61rem;line-height:1.45;
+}
+.legend .row{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+.legend .dot{width:6px;height:6px;border-radius:50%;flex:none}
+.legend .name{color:var(--muted);font-weight:600;min-width:64px;text-align:left}
+.legend .bar{
+  height:3px;width:58px;border-radius:99px;flex:none;
+  background:rgba(95,216,255,.10);overflow:hidden;
+}
+.legend .bar i{
+  display:block;height:100%;width:0%;
+  border-radius:99px;transition:width .25s ease-out;
+}
+
+/* Gerçek Model Top-K Olasılık Paneli */
+.prob-panel{
+  width:250px;pointer-events:auto;
+}
+.prob-sub{
+  font-size:.55rem;color:var(--muted);margin-bottom:6px;
+  display:flex;justify-content:space-between;
+}
+.cand-list{display:flex;flex-direction:column;gap:5px;min-height:150px}
+.cand-row{
+  display:flex;flex-direction:column;gap:2px;
+  padding:4px 7px;border-radius:6px;
+  background:rgba(10,32,52,.48);
+  border:1px solid rgba(95,216,255,.12);
+  cursor:pointer;transition:.14s;
+}
+.cand-row:hover{
+  border-color:var(--cyan);
+  background:rgba(20,58,90,.72);
+}
+.cand-row.chosen{
+  border-color:var(--emerald);
+  background:rgba(52,211,153,.16);
+  box-shadow:0 0 14px rgba(52,211,153,.25);
+}
+.cand-top{display:flex;justify-content:space-between;font-size:.64rem}
+.cand-tok{color:#fff;font-weight:700}
+.cand-pct{color:var(--cyan);font-weight:600;font-size:.60rem}
+.cand-bar{
+  height:3px;width:100%;background:rgba(95,216,255,.10);
+  border-radius:99px;overflow:hidden;
+}
+.cand-bar i{
+  display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--cyan),var(--emerald));
+  transition:width .2s ease-out;
+}
+
+.hint{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  z-index:10;font-size:.57rem;color:rgba(95,216,255,.40);
+  letter-spacing:.15em;text-transform:uppercase;pointer-events:none;
+  white-space:nowrap;
+}
+</style>
+</head>
+<body>
+
+<canvas id="net"></canvas>
+<div class="overlay"></div>
+
+<!-- Üst sol: Dorina AI Durum & Bağlam -->
+<div class="hud tl">
+  <div class="hud-box">
+    <div class="title-line"><i></i><span>Dorina · Canlı Nöral İzleme</span></div>
+    <div><span class="k">API:</span> <span class="v" id="modeVal">BAĞLANIYOR (127.0.0.1:8000)…</span></div>
+    <div><span class="k">Bilişsel Faz:</span> <span class="v amber" id="phaseVal">BEKLİYOR</span></div>
+    <div><span class="k">Üretilen Token:</span> <span class="v" id="tokCount">0</span></div>
+
+    <div class="prompt-bar">
+      <input type="text" id="seedInput" class="prompt-input" value="Once upon a" placeholder="Başlangıç metni (Prompt)...">
+      <button class="btn" id="seedBtn">BAŞLAT</button>
+    </div>
+
+    <div class="context-ribbon" id="ctxRibbon">Once upon a</div>
+  </div>
+</div>
+
+<!-- Üst sağ: Ağ Katmanları + Model Top-K Olasılıkları -->
+<div class="hud tr">
+  <div class="hud-box" style="min-width:250px">
+    <div class="title-line" style="justify-content:flex-end">
+      <span>Nöral Katman Aktivasyonu</span><i></i>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="hud-box prob-panel">
+    <div class="title-line" style="justify-content:flex-end">
+      <span>Model Olasılıkları (Top-K)</span><i></i>
+    </div>
+    <div class="prob-sub">
+      <span>ADAY TOKEN</span>
+      <span>OLASILIK (seçmek için tıkla)</span>
+    </div>
+    <div class="cand-list" id="candList">
+      <div style="color:var(--muted);font-size:.6rem;text-align:center;margin-top:45px">
+        /inspect verisi bekleniyor...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alt sol: Kontroller -->
+<div class="hud bl">
+  <div class="hud-box">
+    <span class="k">Akış & Sampling Kontrolü</span>
+    <div class="controls">
+      <button class="btn primary on" id="playBtn">⏸ DURDUR</button>
+      <button class="btn" id="stepBtn" title="Modeli 1 token ilerlet">⏭ 1 ADIM</button>
+      <button class="btn" id="resetBtn">↻ SIFIRLA</button>
+      <button class="btn" id="speedBtn">⏩ Düşünme: 0.9s</button>
+      <button class="btn" id="modeSelectBtn" title="Sampling: Olasılıksal vs Greedy (En Yüksek)">🎲 Sampling</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alt sağ: Model Metrikleri -->
+<div class="hud br">
+  <div class="hud-box">
+    <div><span class="k">Süre:</span> <span class="v" id="elapsedVal">0.0s</span></div>
+    <div><span class="k">Hız:</span> <span class="v" id="rateVal">0.0 tok/s</span></div>
+    <div><span class="k">Model Entropisi:</span> <span class="v" id="entVal">—</span></div>
+    <div><span class="k">Seçim Olasılığı:</span> <span class="v green" id="confVal">—</span></div>
+    <div><span class="k">Son Token:</span> <span class="v" id="lastTokVal">—</span></div>
+  </div>
+</div>
+
+<div class="hint">Sağdaki veya merkezdeki aday tokenlara tıklayarak modelin kararını ezebilirsin</div>
+
+<script>
+/* ============================================================
+   Yardımcılar
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+const lerp  = (a,b,t) => a + (b-a)*t;
+
+function hash(s){
+  let h = 2166136261;
+  for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); }
+  return h >>> 0;
+}
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ============================================================
+   Konfigürasyon & Dorina Backend API
+   ============================================================ */
+const API = 'http://127.0.0.1:8000';
+
+const CFG = {
+  thinkHoldMs: 900,    // Modelin /inspect yanıtı geldikten sonra olasılıkları ekranda tartma süresi
+  commitHoldMs: 450,   // Seçilen kelimenin ateşlenme süresi
+  topK: 8,
+  nodesPerNet: 9,
+  dendPerNode: 11,
+  beamThreshold: 0.22,
+};
+
+const NET_DEFS = [
+  { name:'SEMANTIC', rgb:[110,200,255], xFrac:0.32, yTop:0.26, yBot:0.74 },
+  { name:'SYNTAX',   rgb:[100,220,240], xFrac:0.19, yTop:0.31, yBot:0.69 },
+  { name:'MEMORY',   rgb:[140,170,255], xFrac:0.07, yTop:0.36, yBot:0.64 },
+  { name:'STYLE',    rgb:[190,160,255], xFrac:0.68, yTop:0.26, yBot:0.74 },
+  { name:'EMOTION',  rgb:[235,135,215], xFrac:0.81, yTop:0.31, yBot:0.69 },
+  { name:'FACT',     rgb:[95, 235,195], xFrac:0.93, yTop:0.36, yBot:0.64 },
+];
+
+/* ============================================================
+   Durum (State)
+   ============================================================ */
+const state = {
+  promptText: 'Once upon a',
+  tokens: [],           // { text, y, targetY, addedAt, nets:[..], netsSum, prob, attention:[] }
+  predictions: [],      // Backend'den gelen gerçek [{ text, probability }]
+  rawAttention: [],     // Backend'den gelen gerçek attention ağırlıkları (varsa)
+  rawNetActs: null,     // Backend'den gelen katman/ağ aktivasyonları (varsa)
+  chosenIdx: -1,
+  phase: 'IDLE',        // 'FETCHING' | 'THINKING' | 'COMMITTING' | 'ERROR'
+  phaseStart: 0,
+  entropy: 0,
+  greedyMode: false,    // false: Olasılıksal Sampling, true: Argmax (En yüksek olasılık)
+  running: true,
+  startTime: performance.now(),
+  tokenCount: 0,
+};
+
+let W = 0, H = 0, DPR = 1;
+const canvas = $('net');
+const ctx    = canvas.getContext('2d');
+
+let networks = [];
+let beams = [];
+let thinkWaves = [];
+let particles = [];
+let loopTimer = null;
+
+/* ============================================================
+   Boyutlandırma & Ağ İnşası
+   ============================================================ */
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width  = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  networks = NET_DEFS.map(buildNetwork);
+  buildLegend();
+}
+
+function buildNetwork(def){
+  const cx   = W * def.xFrac;
+  const yTop = H * def.yTop;
+  const yBot = H * def.yBot;
+  const N = CFG.nodesPerNet;
+
+  const nodes = [];
+  for (let k = 0; k < N; k++){
+    const t = N > 1 ? k / (N - 1) : 0.5;
+    nodes.push({
+      x: cx,
+      y: yTop + t * (yBot - yTop),
+      r: 3.2,
+      act: 0,
+      phase: Math.random() * Math.PI * 2,
+      flashT: -1,
+    });
+  }
+
+  const rnd = mulberry32(hash(def.name));
+  const dendrites = [];
+  let maxLen = 0;
+  for (const node of nodes){
+    const cnt = CFG.dendPerNode + Math.floor(rnd() * 7);
+    for (let k = 0; k < cnt; k++){
+      const angle = rnd() * Math.PI * 2;
+      const len = 22 + rnd() * 125;
+      if (len > maxLen) maxLen = len;
+      dendrites.push({
+        node, angle, len,
+        curl: (rnd() - 0.5) * 1.6,
+        bright: 0.55 + rnd() * 0.55,
+      });
+    }
+  }
+
+  const pad = maxLen + 24;
+  const bx  = cx - pad;
+  const by  = yTop - pad;
+  const bw  = pad * 2;
+  const bh  = (yBot - yTop) + pad * 2;
+
+  const off = document.createElement('canvas');
+  off.width  = Math.ceil(bw * DPR);
+  off.height = Math.ceil(bh * DPR);
+  const oc = off.getContext('2d');
+  oc.scale(DPR, DPR);
+  oc.translate(-bx, -by);
+  oc.globalCompositeOperation = 'lighter';
+  oc.lineCap = 'round';
+
+  const [R,G,B] = def.rgb;
+
+  for (const d of dendrites){
+    const n  = d.node;
+    const ex = n.x + Math.cos(d.angle) * d.len;
+    const ey = n.y + Math.sin(d.angle) * d.len;
+    const cxp = n.x + Math.cos(d.angle + d.curl * 0.5) * d.len * 0.55;
+    const cyp = n.y + Math.sin(d.angle + d.curl * 0.5) * d.len * 0.55;
+
+    oc.beginPath();
+    oc.moveTo(n.x, n.y);
+    oc.quadraticCurveTo(cxp, cyp, ex, ey);
+    oc.lineWidth = 2.4;
+    oc.strokeStyle = `rgba(${R},${G},${B},${(0.045 * d.bright).toFixed(4)})`;
+    oc.stroke();
+
+    oc.beginPath();
+    oc.moveTo(n.x, n.y);
+    oc.quadraticCurveTo(cxp, cyp, ex, ey);
+    oc.lineWidth = 0.55;
+    oc.strokeStyle = `rgba(${R},${G},${B},${(0.34 * d.bright).toFixed(4)})`;
+    oc.stroke();
+  }
+
+  oc.beginPath();
+  nodes.forEach((n,k)=> k ? oc.lineTo(n.x,n.y) : oc.moveTo(n.x,n.y));
+  oc.lineWidth = 7;
+  oc.strokeStyle = `rgba(${R},${G},${B},0.07)`;
+  oc.stroke();
+
+  oc.beginPath();
+  nodes.forEach((n,k)=> k ? oc.lineTo(n.x,n.y) : oc.moveTo(n.x,n.y));
+  oc.lineWidth = 1.5;
+  oc.strokeStyle = `rgba(${R},${G},${B},0.72)`;
+  oc.stroke();
+
+  return {
+    def, x: cx, nodes, dendrites,
+    off, bx, by, bw, bh,
+    activation: 0, target: 0,
+  };
+}
+
+function buildLegend(){
+  const el = $('legend');
+  el.innerHTML = '';
+  networks.forEach((net, i) => {
+    const [R,G,B] = net.def.rgb;
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div class="dot" style="background:rgb(${R},${G},${B});box-shadow:0 0 8px rgba(${R},${G},${B},.9)"></div>
+      <div class="name">${net.def.name}</div>
+      <div class="bar"><i id="legbar-${i}" style="background:linear-gradient(90deg,rgba(${R},${G},${B},.3),rgb(${R},${G},${B}))"></i></div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ============================================================
+   Dorina AI Backend İletişimi (/inspect)
+   ============================================================ */
+async function fetchModelInspect(text, topK){
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 4500);
+  try{
+    const res = await fetch(API + '/inspect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, top_k: topK }),
+      signal: ctrl.signal
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+/* ============================================================
+   Gerçek Model Verisini Görsel Ağlara Eşleme
+   ============================================================ */
+function extractNetworkActivations(apiData, chosenProb, entropy){
+  // 1. Eğer dorina-ai backend'i doğrudan katman veya ağ aktivasyonu döndürüyorsa onu kullan:
+  const raw = apiData.networks || apiData.layer_activations || apiData.activations || apiData.hidden_norms;
+  if (Array.isArray(raw) && raw.length){
+    return networks.map((_, i) => clamp(Number(raw[i % raw.length]) || 0.2, 0.05, 1));
+  }
+  if (raw && typeof raw === 'object'){
+    return networks.map(n => clamp(Number(raw[n.def.name] ?? raw[n.def.name.toLowerCase()] ?? 0.3), 0.05, 1));
+  }
+
+  // 2. Backend sadece predictions, attention ve entropy döndürüyorsa,
+  // ağları gerçek olasılık dağılımı (confidence, dağılım yayılımı, attention gücü) ile sür:
+  const preds = state.predictions;
+  const p0 = (preds[0]?.probability || 50) / 100;
+  const p1 = (preds[1]?.probability || 15) / 100;
+  const margin = clamp(p0 - p1, 0, 1);                  // Karar netliği
+  const normEnt = clamp(entropy / 4.5, 0.05, 1);        // Entropi yoğunluğu
+  const attMean = state.rawAttention.length
+    ? clamp(state.rawAttention.reduce((a,b)=>a+b,0) / state.rawAttention.length, 0.1, 1)
+    : clamp(state.tokens.length / 12, 0.15, 0.85);
+
+  return [
+    clamp(p0 * 0.85 + normEnt * 0.25, 0.1, 1),          // SEMANTIC: Ana aday gücü
+    clamp(margin * 0.9 + 0.2, 0.1, 1),                  // SYNTAX:   Top-1 ve Top-2 farkı (yapısal kesinlik)
+    clamp(attMean * 0.95, 0.1, 1),                      // MEMORY:   Geçmiş tokenlara Attention yoğunluğu
+    clamp(normEnt * 0.85 + 0.15, 0.1, 1),               // STYLE:    Dağılım çeşitliliği / Entropi
+    clamp((1 - margin) * 0.75 + normEnt * 0.3, 0.1, 1), // EMOTION:  Alternatiflerin rekabeti
+    clamp((chosenProb / 100) * 0.95, 0.1, 1),           // FACT:     Seçilen tokenın kesinliği
+  ];
+}
+
+function extractAttentionLinks(apiData){
+  const n = state.tokens.length;
+  if (n === 0) return [];
+
+  // Backend `attention` dizisi gönderiyorsa doğrudan bağla
+  const att = apiData.attention || apiData.attentions;
+  if (Array.isArray(att) && att.length){
+    const flat = Array.isArray(att[0]) ? att[att.length - 1] : att;
+    const links = [];
+    for (let i = 0; i < Math.min(n, flat.length); i++){
+      const tokIdx = n - 1 - i;
+      const w = Number(flat[flat.length - 1 - i]) || 0;
+      if (tokIdx >= 0 && w > 0.12){
+        links.push({ targetToken: state.tokens[tokIdx], weight: clamp(w, 0, 1) });
+      }
+    }
+    return links.slice(0, 4);
+  }
+
+  // Göndermiyorsa son 2 tokena doğal bağlam yayı çiz
+  const fallback = [];
+  if (n >= 1) fallback.push({ targetToken: state.tokens[n-1], weight: 0.75 });
+  if (n >= 2) fallback.push({ targetToken: state.tokens[n-2], weight: 0.45 });
+  return fallback;
+}
+
+/* ============================================================
+   Canlı Bilişsel Döngü: 1) API'den Olasılıkları Çek -> 2) Düşünmeyi Göster -> 3) Seç
+   ============================================================ */
+let stepReqId = 0;
+
+async function runCognitiveStep(){
+  if (!state.running && state.phase !== 'STEP_ONCE') return;
+  const myId = ++stepReqId;
+
+  state.phase = 'FETCHING';
+  state.chosenIdx = -1;
+  $('phaseVal').textContent = 'MODEL DÜŞÜNÜYOR (/inspect)…';
+  $('phaseVal').className = 'v amber';
+
+  // Ağlardan merkeze doğru düşünme dalgaları başlat
+  spawnThinkingWaves();
+
+  const fullText = getFullText();
+
+  try {
+    const data = await fetchModelInspect(fullText, CFG.topK);
+    if (myId !== stepReqId) return;
+
+    $('modeVal').textContent = 'DORINA-AI (ONLINE)';$('modeVal').className = 'v green';
+
+    // Tahminleri (Top-K) normalize et
+    let preds = (data.predictions || data.top_k || data.candidates || []).map(p => ({
+      text: String(p.text ?? p.token ?? ''),
+      probability: Number(p.probability ?? p.prob ?? 0)
+    })).filter(p => p.text.length > 0);
+
+    // Eğer olasılıklar 0..1 arasındaysa 0..100 yüzdesine çevir
+    if (preds.length && Math.max(...preds.map(p => p.probability)) <= 1.05){
+      preds = preds.map(p => ({ ...p, probability: +(p.probability * 100).toFixed(2) }));
+    }
+    preds.sort((a,b) => b.probability - a.probability);
+
+    state.predictions = preds;
+    state.rawAttention = Array.isArray(data.attention) ? data.attention : [];
+
+    // Entropi: Backend gönderdiyse onu al, göndermediyse gelen gerçek olasılıklardan hesapla
+    if (data.entropy !== undefined && data.entropy !== null){
+      state.entropy = Number(data.entropy);
+    } else {
+      let h = 0;
+      const sumP = preds.reduce((a,b)=>a+b.probability,0) || 100;
+      for (const p of preds){
+        const prob = p.probability / sumP;
+        if (prob > 1e-6) h -= prob * Math.log2(prob);
+      }
+      state.entropy = h;
+    }
+
+    // DÜŞÜNME FAZI: Adayları ve olasılıkları ekranda göster
+    state.phase = 'THINKING';
+    state.phaseStart = performance.now();
+    state.lastApiData = data;
+
+    $('phaseVal').textContent = `ADAYLAR TARTILIYOR (${preds.length} aday)`;
+    $('phaseVal').className = 'v amber';
+
+    renderCandidatePanel();
+    updateHud();
+
+    clearTimeout(loopTimer);
+    if (state.running){
+      loopTimer = setTimeout(() => {
+        commitCandidate();
+      }, CFG.thinkHoldMs);
+    }
+
+  } catch (err) {
+    if (myId !== stepReqId) return;
+    state.phase = 'ERROR';
+    $('modeVal').textContent = 'API BAĞLANTI HATASI (127.0.0.1:8000)';
+    $('modeVal').className = 'v rose';$('phaseVal').textContent = 'BACKEND BEKLENİYOR…';
+    $('phaseVal').className = 'v rose';
+
+    clearTimeout(loopTimer);
+    if (state.running){
+      loopTimer = setTimeout(runCognitiveStep, 2000);
+    }
+  }
+}
+
+function commitCandidate(forcedIdx = null){
+  if (!state.predictions.length) return;
+
+  state.phase = 'COMMITTING';
+  state.phaseStart = performance.now();
+
+  const idx = (forcedIdx !== null)
+    ? forcedIdx
+    : (state.greedyMode ? 0 : sampleFromPredictions(state.predictions));
+
+  state.chosenIdx = idx;
+  const chosen = state.predictions[idx] || state.predictions[0];
+
+  $('confVal').textContent = '%' + chosen.probability.toFixed(1);
+  $('confVal').className = 'v ' + (chosen.probability > 50 ? 'green' : chosen.probability > 20 ? 'amber' : 'rose');$('phaseVal').textContent = `SEÇİLDİ → ${JSON.stringify(chosen.text)}`;
+  $('phaseVal').className = 'v green';
+
+  renderCandidatePanel();
+
+  const netActs = extractNetworkActivations(state.lastApiData || {}, chosen.probability, state.entropy);
+  const attLinks = extractAttentionLinks(state.lastApiData || {});
+
+  addTokenToStream(chosen.text, netActs, chosen.probability, attLinks);
+  fireBeamsFromToken(netActs);
+  updateHud();
+
+  clearTimeout(loopTimer);
+  if (state.running){
+    loopTimer = setTimeout(runCognitiveStep, CFG.commitHoldMs);
+  }
+}
+
+function sampleFromPredictions(preds){
+  const sum = preds.reduce((a,b) => a + b.probability, 0);
+  if (sum <= 0) return 0;
+  let r = Math.random() * sum;
+  for (let i = 0; i < preds.length; i++){
+    r -= preds[i].probability;
+    if (r <= 0) return i;
+  }
+  return 0;
+}
+
+/* ============================================================
+   Sağ Panel: Gerçek Top-K Olasılık Listesi
+   ============================================================ */
+function renderCandidatePanel(){
+  const container = $('candList');
+  container.innerHTML = '';
+
+  if (!state.predictions.length){
+    container.innerHTML = `<div style="color:var(--muted);font-size:.6rem;text-align:center;margin-top:45px">Aday bulunamadı</div>`;
+    return;
+  }
+
+  state.predictions.forEach((p, idx) => {
+    const isChosen = (state.phase === 'COMMITTING' && idx === state.chosenIdx);
+    const row = document.createElement('div');
+    row.className = 'cand-row' + (isChosen ? ' chosen' : '');
+    row.innerHTML = `
+      <div class="cand-top">
+        <span class="cand-tok">${JSON.stringify(p.text)}</span>
+        <span class="cand-pct">%${p.probability.toFixed(2)}</span>
+      </div>
+      <div class="cand-bar">
+        <i style="width:${clamp(p.probability, 2, 100)}%"></i>
+      </div>
+    `;
+    row.addEventListener('click', () => {
+      clearTimeout(loopTimer);
+      commitCandidate(idx);
+    });
+    container.appendChild(row);
+  });
+}
+
+/* ============================================================
+   Merkez Token Akışı & Işınlar
+   ============================================================ */
+function initStreamFromPrompt(promptStr){
+  state.tokens = [];
+  state.tokenCount = 0;
+  const focusY = H * 0.46;
+  const slot = 34;
+  const parts = promptStr.trim().split(/\s+/).filter(Boolean);
+
+  parts.forEach((word, i) => {
+    const yPos = focusY - (parts.length - 1 - i) * slot;
+    state.tokens.push({
+      text: word,
+      y: yPos,
+      targetY: yPos,
+      addedAt: performance.now(),
+      nets: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+      netsSum: 0.3,
+      prob: 100,
+      attention: []
+    });
+  });
+  updateContextRibbon();
+}
+
+function addTokenToStream(text, netActs, prob, attentionLinks){
+  const slot = 34;
+  const focusY = H * 0.46;
+
+  for (const t of state.tokens){
+    t.targetY -= slot;
+  }
+  state.tokens = state.tokens.filter(t => t.targetY > -80);
+
+  const newTok = {
+    text,
+    y: focusY + 55,
+    targetY: focusY,
+    addedAt: performance.now(),
+    nets: netActs,
+    netsSum: netActs.reduce((a,b)=>a+b,0) / netActs.length,
+    prob: prob ?? 0,
+    attention: attentionLinks || [],
+  };
+  state.tokens.push(newTok);
+
+  state.tokenCount++;
+  $('tokCount').textContent = state.tokenCount;
+  $('lastTokVal').textContent = `${JSON.stringify(text)} (%${prob.toFixed(1)})`;
+
+  // Prompt metnine yeni tokenı ekle
+  if (/^[.,!?;:]/.test(text) || text.startsWith("'") || text.startsWith("’")){
+    state.promptText += text;
+  } else {
+    state.promptText += (state.promptText ? ' ' : '') + text;
+  }
+  updateContextRibbon(text);
+}
+
+function updateContextRibbon(latestTok = ''){
+  const full = state.promptText;
+  if (!latestTok){
+    $('ctxRibbon').textContent = full;
+    return;
+  }
+  const idx = full.lastIndexOf(latestTok);
+  if (idx !== -1){
+    $('ctxRibbon').innerHTML = full.slice(0, idx) + `<b>${full.slice(idx)}</b>`;
+  } else {
+    $('ctxRibbon').textContent = full;
+  }
+  const el = $('ctxRibbon');
+  el.scrollTop = el.scrollHeight;
+}
+
+function getFullText(){
+  return state.promptText;
+}
+
+function spawnThinkingWaves(){
+  const center = { x: W * 0.5, y: H * 0.46 };
+  networks.forEach(net => {
+    const node = net.nodes[Math.floor(Math.random() * net.nodes.length)];
+    net.target = Math.max(net.target, 0.22 + Math.random() * 0.25);
+    thinkWaves.push({
+      ox: node.x, oy: node.y,
+      tx: center.x + (Math.random() - 0.5) * 50,
+      ty: center.y + 45 + (Math.random() - 0.5) * 18,
+      t: 0,
+      speed: 1.5 + Math.random() * 0.7,
+      rgb: net.def.rgb,
+      curve: (Math.random() - 0.5) * 0.25
+    });
+  });
+}
+
+function fireBeamsFromToken(netActs){
+  const origin = { x: W * 0.5, y: H * 0.46 };
+  const sorted = netActs.map((a,i)=>({i,a})).sort((x,y)=>y.a-x.a);
+
+  for (const {i, a} of sorted){
+    if (a < CFG.beamThreshold) break;
+    const net = networks[i];
+    const count = a > 0.60 ? 2 : 1;
+    for (let k = 0; k < count; k++){
+      const node = net.nodes[Math.floor(Math.random() * net.nodes.length)];
+      beams.push({
+        ox: origin.x + (Math.random()-0.5) * 16,
+        oy: origin.y + (Math.random()-0.5) * 16,
+        tx: node.x,
+        ty: node.y,
+        node,
+        t: 0,
+        speed: 1.9 + Math.random() * 0.8,
+        strength: a,
+        rgb: net.def.rgb,
+        curve: (Math.random() - 0.5) * 0.35,
+      });
+    }
+    net.target = Math.max(net.target, a);
+  }
+}
+
+function beamPoint(b, t){
+  const dx = b.tx - b.ox;
+  const dy = b.ty - b.oy;
+  const mx = (b.ox + b.tx) / 2;
+  const my = (b.oy + b.ty) / 2;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  const bend = b.curve * len;
+  const cx = mx + nx * bend;
+  const cy = my + ny * bend;
+
+  const u = 1 - t;
+  return {
+    x: u*u*b.ox + 2*u*t*cx + t*t*b.tx,
+    y: u*u*b.oy + 2*u*t*cy + t*t*b.ty,
+    cx, cy,
+  };
+}
+
+function updatePhysics(dt){
+  for (let i = thinkWaves.length - 1; i >= 0; i--){
+    const w = thinkWaves[i];
+    w.t += w.speed * dt;
+    if (w.t >= 1) thinkWaves.splice(i, 1);
+  }
+
+  for (let i = beams.length - 1; i >= 0; i--){
+    const b = beams[i];
+    b.t += b.speed * dt;
+    if (b.t >= 1){
+      if (b.node){
+        b.node.act = Math.max(b.node.act, b.strength);
+        b.node.flashT = performance.now();
+      }
+      for (let k = 0; k < 6; k++){
+        const ang = Math.random() * Math.PI * 2;
+        const sp = 40 + Math.random() * 90;
+        particles.push({
+          x: b.tx, y: b.ty,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          life: 0.55, maxLife: 0.55,
+          rgb: b.rgb,
+          size: 1.1 + Math.random() * 1.4,
+        });
+      }
+      beams.splice(i, 1);
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.94;
+    p.vy *= 0.94;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+/* ============================================================
+   Kontroller & Etkileşim
+   ============================================================ */
+$('playBtn').addEventListener('click', () => {
+  state.running = !state.running;
+  const b = $('playBtn');
+  if (state.running){
+    b.textContent = '⏸ DURDUR';
+    b.classList.add('on');
+    runCognitiveStep();
+  } else {
+    b.textContent = '▶ DEVAM';
+    b.classList.remove('on');
+    clearTimeout(loopTimer);
+    $('phaseVal').textContent = 'DURAKLATILDI (ADAY SEÇEBİLİRSİN)';
+  }
+});
+
+$('stepBtn').addEventListener('click', () => {
+  state.running = false;
+  $('playBtn').textContent = '▶ DEVAM';
+  $('playBtn').classList.remove('on');
+  clearTimeout(loopTimer);
+
+  if (state.phase === 'THINKING' && state.predictions.length){
+    commitCandidate();
+  } else {
+    state.phase = 'STEP_ONCE';
+    runCognitiveStep();
+  }
+});
+
+$('seedBtn').addEventListener('click', () => {
+  const val = $('seedInput').value.trim() || 'Once';
+  state.promptText = val;
+  initStreamFromPrompt(val);
+  clearTimeout(loopTimer);
+  runCognitiveStep();
+});
+
+$('seedInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('seedBtn').click();
+});
+
+$('resetBtn').addEventListener('click', () => {
+  const val = $('seedInput').value.trim() || 'Once upon a';
+  state.promptText = val;
+  state.predictions = [];
+  state.startTime = performance.now();
+  initStreamFromPrompt(val);
+  clearTimeout(loopTimer);
+  if (state.running) runCognitiveStep();
+});
+
+const holdOpts = [400, 900, 1600, 2500];
+let holdIdx = 1;
+$('speedBtn').addEventListener('click', () => {
+  holdIdx = (holdIdx + 1) % holdOpts.length;
+  CFG.thinkHoldMs = holdOpts[holdIdx];
+  $('speedBtn').textContent = `⏩ Düşünme: ${(CFG.thinkHoldMs/1000).toFixed(1)}s`;
+});
+
+$('modeSelectBtn').addEventListener('click', () => {
+  state.greedyMode = !state.greedyMode;
+  $('modeSelectBtn').textContent = state.greedyMode ? '🎯 Greedy (Top-1)' : '🎲 Sampling';
+});
+
+// Canvas üzerindeki düşünce bulutu adaylarına tıklama desteği
+canvas.addEventListener('click', e => {
+  if (!state.predictions.length) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const cx = W * 0.5;
+  const baseY = H * 0.46 + 68;
+  const topCandidates = state.predictions.slice(0, 5);
+  const spacing = 108;
+  const startX = cx - ((topCandidates.length - 1) * spacing) / 2;
+
+  topCandidates.forEach((cand, i) => {
+    const x = startX + i * spacing;
+    const y = baseY;
+    if (Math.hypot(mx - x, my - y) < 42){
+      clearTimeout(loopTimer);
+      commitCandidate(i);
+    }
+  });
+});
+
+/* ============================================================
+   Render Döngüsü
+   ============================================================ */
+let last = performance.now();
+
+function render(now){
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const time = now / 1000;
+
+  for (const net of networks){
+    net.target *= Math.pow(0.55, dt);
+    net.activation = lerp(net.activation, net.target, 1 - Math.pow(0.008, dt));
+    for (const n of net.nodes){
+      n.act *= Math.pow(0.35, dt);
+      if (n.flashT > 0 && now - n.flashT > 600) n.flashT = -1;
+    }
+  }
+  updatePhysics(dt);
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  drawBackdrop(time);
+
+  /* --- Ağları Çiz --- */
+  ctx.globalCompositeOperation = 'lighter';
+  for (const net of networks){
+    ctx.globalAlpha = 0.28 + net.activation * 0.72;
+    ctx.drawImage(net.off, net.bx, net.by, net.bw, net.bh);
+  }
+  ctx.globalAlpha = 1;
+
+  for (const net of networks){
+    const [R,G,B] = net.def.rgb;
+    const netMul = 0.35 + net.activation * 0.65;
+    for (const n of net.nodes){
+      const pulse = 0.65 + 0.35 * Math.sin(time * 2.6 + n.phase);
+      const act = clamp(n.act + net.activation * 0.5, 0, 1.4);
+      const baseR = (2.6 + act * 5.2) * pulse;
+
+      const haloR = baseR * 6.5;
+      const hg = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, haloR);
+      hg.addColorStop(0,   `rgba(${R},${G},${B},${(0.40*act*netMul).toFixed(3)})`);
+      hg.addColorStop(0.3, `rgba(${R},${G},${B},${(0.14*act*netMul).toFixed(3)})`);
+      hg.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, haloR, 0, Math.PI * 2);
+      ctx.fillStyle = hg;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, baseR, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(230,248,255,${(0.55 + 0.45*pulse).toFixed(3)})`;
+      ctx.fill();
+
+      if (n.flashT > 0){
+        const since = (now - n.flashT) / 1000;
+        const flashR = baseR + 6 + since * 40;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, flashR, 0, Math.PI * 2);
+        ctx.lineWidth = 1.4 * (1 - since * 1.6);
+        ctx.strokeStyle = `rgba(${R},${G},${B},${(0.85 * (1 - since * 1.8)).toFixed(3)})`;
+        ctx.stroke();
+      }
+    }
+
+    const yLabel = net.by - 14;
+    const cx = net.x;
+    const labelAlpha = 0.55 + net.activation * 0.45;
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = `rgba(${R},${G},${B},${labelAlpha.toFixed(2)})`;
+    ctx.fillText(net.def.name, cx, yLabel);
+
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.fillStyle = `rgba(${R},${G},${B},${(labelAlpha * 0.65).toFixed(2)})`;
+    ctx.fillText(`%${Math.round(net.activation * 100)}`, cx, yLabel + 13);
+  }
+
+  /* --- Düşünme Dalgaları (Ağlardan -> Merkeze) --- */
+  for (const w of thinkWaves){
+    const head = beamPoint(w, w.t);
+    const tail = beamPoint(w, Math.max(0, w.t - 0.18));
+    const [R,G,B] = w.rgb;
+    const alpha = Math.sin(w.t * Math.PI) * 0.6;
+
+    ctx.beginPath();
+    ctx.moveTo(tail.x, tail.y);
+    ctx.quadraticCurveTo(head.cx, head.cy, head.x, head.y);
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = `rgba(${R},${G},${B},${alpha.toFixed(3)})`;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* --- Ateşleme Işınları (Merkezden -> Ağlara) --- */
+  for (const b of beams){
+    const head = beamPoint(b, b.t);
+    const tail = beamPoint(b, Math.max(0, b.t - 0.12));
+    const [R,G,B] = b.rgb;
+    const alpha = b.strength * Math.sin(b.t * Math.PI);
+
+    ctx.beginPath();
+    ctx.moveTo(tail.x, tail.y);
+    ctx.quadraticCurveTo(head.cx, head.cy, head.x, head.y);
+    ctx.lineWidth = 1.3 + b.strength * 2.2;
+    ctx.strokeStyle = `rgba(${R},${G},${B},${(0.6*alpha).toFixed(3)})`;
+    ctx.stroke();
+
+    const gr = 5 + b.strength * 11;
+    const g = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, gr);
+    g.addColorStop(0, `rgba(240,250,255,${(0.95*alpha).toFixed(3)})`);
+    g.addColorStop(0.35, `rgba(${R},${G},${B},${(0.55*alpha).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, gr, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
+  /* --- Merkez Akış ve Modelin Aday Olasılık Bulutu --- */
+  ctx.globalCompositeOperation = 'source-over';
+  drawCenterStream(now, dt, time);
+  drawDeliberationHalo(now, time);
+
+  /* --- Parçacıklar --- */
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of particles){
+    const a = clamp(p.life / p.maxLife, 0, 1);
+    const [R,G,B] = p.rgb;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * (0.5 + a * 0.7), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${R},${G},${B},${(0.9*a).toFixed(3)})`;
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  if (Math.random() < 0.2) updateLegendBars();
+
+  requestAnimationFrame(render);
+}
+
+/* ---------- Merkez Token Akışı & Attention Yayları ---------- */
+function drawCenterStream(now, dt, time){
+  const focusY = H * 0.46;
+  const cx = W * 0.5;
+
+  for (const t of state.tokens){
+    t.y = lerp(t.y, t.targetY, 1 - Math.pow(0.015, dt));
+  }
+
+  // Odak Çizgisi
+  const gradLine = ctx.createLinearGradient(W*0.25, 0, W*0.75, 0);
+  gradLine.addColorStop(0, 'rgba(95,216,255,0)');
+  gradLine.addColorStop(0.5, `rgba(95,216,255,${0.25 + 0.1*Math.sin(time*2.5)})`);
+  gradLine.addColorStop(1, 'rgba(95,216,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(W*0.25, focusY);
+  ctx.lineTo(W*0.75, focusY);
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = gradLine;
+  ctx.stroke();
+
+  // Attention Yayları
+  if (state.tokens.length > 1){
+    const latest = state.tokens[state.tokens.length - 1];
+    const age = (now - latest.addedAt) / 1000;
+    const attFade = clamp(1 - age / 2.2, 0, 1);
+
+    if (attFade > 0.02 && latest.attention){
+      ctx.save();
+      for (const link of latest.attention){
+        const oldT = link.targetToken;
+        if (!oldT || oldT.y < 0) continue;
+        const dist = Math.abs(latest.y - oldT.y);
+        const arcW = 36 + dist * 0.26;
+        const alpha = link.weight * attFade * 0.75;
+
+        ctx.beginPath();
+        ctx.moveTo(cx - 34, latest.y);
+        ctx.quadraticCurveTo(cx - 34 - arcW, (latest.y + oldT.y)/2, cx - 30, oldT.y);
+        ctx.lineWidth = 0.9 + link.weight * 1.8;
+        ctx.strokeStyle = `rgba(192,132,252,${alpha.toFixed(3)})`;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let i = 0; i < state.tokens.length; i++){
+    const t = state.tokens[i];
+    const isLatest = i === state.tokens.length - 1;
+    const distanceFromFocus = Math.abs(t.y - focusY);
+    const fade = clamp(1 - distanceFromFocus / (H * 0.40), 0, 1);
+    const power = clamp(t.netsSum, 0, 1);
+
+    const baseSize = isLatest ? 22 : 14.5;
+    const size = baseSize * (0.75 + 0.25 * fade);
+    const alpha = isLatest ? 1 : 0.30 + 0.55 * fade;
+
+    if (isLatest || power > 0.55){
+      const haloR = isLatest ? 52 + 10 * Math.sin(time * 3) : 28;
+      const hg = ctx.createRadialGradient(cx, t.y, 0, cx, t.y, haloR);
+      const inten = isLatest ? 0.48 : 0.24 * fade;
+      hg.addColorStop(0,   `rgba(140,225,255,${(inten*power).toFixed(3)})`);
+      hg.addColorStop(0.4, `rgba(80,180,255,${(inten*power*0.4).toFixed(3)})`);
+      hg.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(cx, t.y, haloR, 0, Math.PI * 2);
+      ctx.fillStyle = hg;
+      ctx.fill();
+    }
+
+    ctx.font = `${isLatest ? 700 : 600} ${size}px "JetBrains Mono", monospace`;
+    ctx.fillStyle = isLatest ? '#f0fcff' : `rgba(200,235,255,${alpha.toFixed(2)})`;
+    ctx.fillText(t.text, cx, t.y);
+
+    if (fade > 0.35 && t.prob < 99.9){
+      ctx.font = `500 9px "JetBrains Mono", monospace`;
+      ctx.fillStyle = isLatest ? 'rgba(52,211,153,0.9)' : `rgba(95,216,255,${(alpha*0.55).toFixed(2)})`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`%${t.prob.toFixed(1)}`, cx + (t.text.length * size * 0.34) + 10, t.y - 2);
+      ctx.textAlign = 'center';
+    }
+  }
+}
+
+/* ---------- Gerçek Top-K Düşünme & Olasılık Bulutu (Merkez Altı) ---------- */
+function drawDeliberationHalo(now, time){
+  if (!state.predictions.length) return;
+
+  const cx = W * 0.5;
+  const baseY = H * 0.46 + 68;
+  const topCandidates = state.predictions.slice(0, 5);
+  const spacing = 108;
+  const startX = cx - ((topCandidates.length - 1) * spacing) / 2;
+
+  const isThinking = (state.phase === 'THINKING' || state.phase === 'FETCHING' || !state.running);
+  const phaseAge = (now - state.phaseStart) / 1000;
+  const jitterAmp = isThinking ? clamp(state.entropy * 0.6, 0.2, 2.2) : 0;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  topCandidates.forEach((cand, i) => {
+    const isChosen = (state.phase === 'COMMITTING' && i === state.chosenIdx);
+    const fadeOut = (state.phase === 'COMMITTING' && !isChosen) ? clamp(1 - phaseAge * 3.0, 0, 1) : 1;
+    if (fadeOut <= 0.02) return;
+
+    const jx = Math.sin(time * 8 + i * 2.1) * jitterAmp;
+    const jy = Math.cos(time * 6 + i * 1.7) * jitterAmp;
+    const x = startX + i * spacing + jx;
+    const y = baseY + jy + (isChosen ? -14 * Math.min(1, phaseAge * 3) : 0);
+
+    // Son kelimeden adaylara inen olasılık dalları
+    ctx.beginPath();
+    ctx.moveTo(cx, H * 0.46 + 14);
+    ctx.quadraticCurveTo(cx, (H * 0.46 + 14 + y)/2, x, y - 14);
+    ctx.lineWidth = isChosen ? 2.0 : 0.7 + (cand.probability / 100) * 1.8;
+    ctx.strokeStyle = isChosen
+      ? `rgba(52,211,153,${0.9 * fadeOut})`
+      : `rgba(95,216,255,${(0.20 + (cand.probability/100)*0.55) * fadeOut})`;
+    ctx.stroke();
+
+    // Aday Token Metni
+    const fontSize = isChosen ? 15 : Math.round(11 + (cand.probability / 100) * 4);
+    ctx.font = `700 ${fontSize}px "JetBrains Mono", monospace`;
+    ctx.fillStyle = isChosen
+      ? `rgba(52,211,153,${fadeOut})`
+      : `rgba(220,245,255,${(0.60 + (cand.probability/100)*0.40) * fadeOut})`;
+    ctx.fillText(cand.text, x, y);
+
+    // Gerçek Olasılık Yüzdesi
+    ctx.font = `600 9px "JetBrains Mono", monospace`;
+    ctx.fillStyle = isChosen
+      ? `rgba(52,211,153,${0.95 * fadeOut})`
+      : `rgba(251,191,36,${0.80 * fadeOut})`;
+    ctx.fillText(`%${cand.probability.toFixed(1)}`, x, y + 15);
+  });
+
+  ctx.restore();
+}
+
+function drawBackdrop(time){
+  const breathe = 0.5 + 0.5 * Math.sin(time * 0.5);
+  const g = ctx.createRadialGradient(
+    W * 0.5, H * 0.5, 0,
+    W * 0.5, H * 0.5, Math.max(W, H) * 0.75
+  );
+  g.addColorStop(0, `rgba(8,30,55,${0.85 + breathe * 0.15})`);
+  g.addColorStop(0.45, '#04121f');
+  g.addColorStop(1, '#02060d');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgba(120,200,255,.025)';
+  const step = 42;
+  for (let x = step; x < W; x += step)
+    for (let y = step; y < H; y += step)
+      ctx.fillRect(x, y, 1, 1);
+}
+
+function updateHud(){
+  const el = (performance.now() - state.startTime) / 1000;
+  $('elapsedVal').textContent = el.toFixed(1) + 's';
+  const rate = state.tokenCount / Math.max(0.5, el);
+  $('rateVal').textContent = rate.toFixed(2) + ' tok/s';
+
+  const ent = state.entropy || 0;
+  $('entVal').textContent = ent.toFixed(3);$('entVal').className = 'v' + (ent > 3.0 ? ' rose' : ent > 1.8 ? ' amber' : ' green');
+}
+
+function updateLegendBars(){
+  for (let i = 0; i < networks.length; i++){
+    const bar = $('legbar-' + i);
+    if (bar) bar.style.width = clamp(networks[i].activation * 100, 2, 100) + '%';
+  }
+}
+
+/* ============================================================
+   Başlat
+   ============================================================ */
+window.addEventListener('resize', () => {
+  resize();
+  const focusY = H * 0.46;
+  const slot = 34;
+  const n = state.tokens.length;
+  state.tokens.forEach((t, i) => {
+    t.targetY = focusY - (n - 1 - i) * slot;
+    t.y = t.targetY;
+  });
+});
+
+resize();
+initStreamFromPrompt(state.promptText);
+requestAnimationFrame(render);
+runCognitiveStep();
+</script>
+</body>
+</html>

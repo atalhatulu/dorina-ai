@@ -2,9 +2,10 @@ import glob
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import os
 
 # =====================================================================
-# 1. PARAMETRELER VE ÇOKLU VERİDEN SÖZLÜK OLUŞTURMA
+# 1. PARAMETRELER VE SÖZLÜK YAPISI (TINYSTORIES UYUMLU)
 # =====================================================================
 context_length = 64
 n_embd = 64
@@ -13,18 +14,25 @@ n_layer = 4
 dropout = 0.1
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-# data klasöründeki tüm txt dosyalarını okuyarak aynı sözlüğü (vocab) oluşturalım
-dosya_listesi = glob.glob("data/*.txt")
-text = ""
-for dosya in dosya_listesi:
-    with open(dosya, "r", encoding="utf-8") as f:
-        text += f.read() + "\n"
+# TinyStories veri setinden veya data klasöründen vocab boyutunu eşitleyelim
+data_path = "data/TinyStoriesV2-GPT4-train.txt"
+if os.path.exists(data_path):
+    with open(data_path, 'r', encoding='utf-8') as f:
+        sample_text = f.read(2_000_000)
+    chars = sorted(list(set(sample_text)))
+else:
+    # Yedek olarak data klasöründeki tüm txt'leri okuyalım
+    dosya_listesi = glob.glob("data/*.txt")
+    text = ""
+    for dosya in dosya_listesi:
+        with open(dosya, "r", encoding="utf-8", errors='ignore') as f:
+            text += f.read() + "\n"
+    chars = sorted(list(set(text)))
 
-chars = sorted(list(set(text)))
 vocab_size = len(chars)
 stoi = { ch:i for i,ch in enumerate(chars) }
 itos = { i:ch for i,ch in enumerate(chars) }
-encode = lambda s: [stoi[c] for c in s if c in stoi] # Sözlükte olmayan karakterleri ele
+encode = lambda s: [stoi[c] for c in s if c in stoi]
 decode = lambda l: ''.join([itos[i] for i in l if i < len(itos)])
 
 class Head(nn.Module):
@@ -104,27 +112,42 @@ class DorinaGPT(nn.Module):
         logits = self.lm_head(x)
         return logits, None
 
+    def generate(self, idx, max_new_tokens):
+        for _ in range(max_new_tokens):
+            idx_cond = idx[:, -context_length:]
+            logits, _ = self(idx_cond)
+            logits = logits[:, -1, :]
+            probs = F.softmax(logits, dim=-1)
+            idx_next = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat((idx, idx_next), dim=1)
+        return idx
+
 # =====================================================================
-# 2. MODELİ YÜKLEME
+# 2. MODELİ YÜKLEME (dorina_tinystories.pt)
 # =====================================================================
 model = DorinaGPT().to(device)
+model_file = "dorina_tinystories.pt"
+
+if not os.path.exists(model_file):
+    model_file = "dorina_v1.pt" # Yedek olarak eski model
+
 try:
-    model.load_state_dict(torch.load("dorina_v1.pt", map_location=device))
+    model.load_state_dict(torch.load(model_file, map_location=device), strict=False)
     model.eval()
-    print(f"✅ Dorina v2 ağırlıkları başarıyla yüklendi! (Vocab Size: {vocab_size})")
-except FileNotFoundError:
-    print("❌ Hata: 'dorina_v1.pt' bulunamadı!")
+    print(f"✅ Model başarıyla yüklendi: {model_file} (Vocab Size: {vocab_size}, Device: {device})")
+except Exception as e:
+    print(f"❌ Model yüklenirken hata oluştu: {e}")
     exit(1)
 
 # =====================================================================
-# 3. İNCELEME VE OLASILIK ANALİZİ FONKSİYONU
+# 3. ANALİZ VE HİKAYE ÜRETME FONKSİYONLARI
 # =====================================================================
 def analyze_next_token(prompt_str, top_k=5):
     tokens = encode(prompt_str)
     if not tokens:
         print("⚠️ Uyarı: Girdiğiniz metindeki karakterler sözlükte bulunamadı!")
-        return []
-
+        return
+        
     idx = torch.tensor([tokens], dtype=torch.long, device=device)
     if idx.shape[1] > context_length:
         idx = idx[:, -context_length:]
@@ -134,42 +157,59 @@ def analyze_next_token(prompt_str, top_k=5):
         last_logits = logits[0, -1, :]
         probs = F.softmax(last_logits, dim=-1)
         top_probs, top_indices = torch.topk(probs, top_k)
-
+        
     print(f"\n📝 Girdi Metin: \"{prompt_str}\"")
     print(f"🔍 Dorina'nın Sonraki Karakter Tahminleri (Top {top_k}):")
     print("-" * 45)
     print(f"{'Karakter':<10} | {'Olasılık (%)':<12} | Görsel Bar")
     print("-" * 45)
-
-    predictions = []
+    
     for p, idx_val in zip(top_probs, top_indices):
         char_val = itos[idx_val.item()]
         display_char = repr(char_val) if char_val != ' ' else "' '"
         percentage = p.item() * 100
         bar = "█" * int(percentage / 2)
         print(f"{display_char:<10} | %{percentage:5.2f}       | {bar}")
-        predictions.append((char_val, p.item()))
-
     print("-" * 45)
-    return predictions
+
+def generate_story(prompt_str, max_tokens=300):
+    tokens = encode(prompt_str)
+    if not tokens:
+        tokens = [0] # Boşsa sıfırdan başla
+        
+    idx = torch.tensor([tokens], dtype=torch.long, device=device)
+    
+    print(f"\n📖 '{prompt_str}' ile hikaye üretiliyor...\n" + "="*50)
+    with torch.no_grad():
+        output_idx = model.generate(idx, max_new_tokens=max_tokens)
+        story_text = decode(output_idx[0].tolist())
+        print(story_text)
+    print("="*50 + "\n")
 
 # =====================================================================
-# 4. İNTERAKTİF DÖNGÜ
+# 4. İNTERAKTİF MENÜ
 # =====================================================================
 if __name__ == "__main__":
     print("\n" + "=" * 65)
-    print("🔮 DORINA v2 - İNTERAKTİF OLASILIK VE KELİME TAMAMLAMA PANELİ")
+    print("🔮 DORINA TINYSTORIES - İNTERAKTİF HİKAYE VE ANALİZ PANELİ")
     print("=" * 65)
-    print("İstediğin bir İngilizce kelime veya cümle yaz (Örn: 'King', 'The', 'Once').")
-    print("Çıkmak için 'q' yazıp Enter'a bas.\n")
+    print("1 -> Bir kelime/cümle yazıp sonraki harf olasılıklarını gör")
+    print("2 -> Bir başlangıç metni verip Dorina'ya uzun hikaye yazdır")
+    print("q -> Çıkış\n")
 
     while True:
-        user_input = input("Metin gir > ")
-        if user_input.lower() == 'q':
+        secim = input("Seçiminiz (1 / 2 / q) > ").strip().lower()
+        if secim == 'q':
             print("Görüşmek üzere, Talha!")
             break
-        if not user_input:
-            continue
-
-        preds = analyze_next_token(user_input, top_k=5)
-        print("\n" + "~" * 65 + "\n")
+        elif secim == '1':
+            user_input = input("Analiz edilecek metin > ")
+            if user_input:
+                analyze_next_token(user_input, top_k=5)
+        elif secim == '2':
+            user_input = input("Hikaye başlangıcı (Örn: 'Once upon a time'): ")
+            if not user_input:
+                user_input = "Once upon a time"
+            generate_story(user_input, max_tokens=300)
+        else:
+            print("Geçersiz seçim, lütfen 1, 2 veya q girin.")

@@ -5,17 +5,30 @@ __pycache__/
 *.so
 .Python
 
-# Sanal ortam klasörü
+# Sanal ortam klasörleri
 .venv/
 venv/
 ENV/
 
-# Model ağırlıkları ve büyük veri setleri (GitHub boyut sınırları için)
+# Model ağırlıkları ve büyük checkpoint'ler (GitHub boyut sınırları için)
 *.pt
 *.ckpt
+checkpoints/
+
+# Veri setleri ve Binary Cache
 data/*.txt
+data/*.bin
+data/*.tar.gz
 data/*.json
-*.tar.gz
+# data_manifest.json ufak ve önemli bir kimlik kartı olduğu için Git'e girmeli:
+!data/data_manifest.json
+
+# Dinamik Laboratuvar Koşuları (Eğitim logları, ara grafikler ve denemeler)
+runs/
+
+# Releases (Kalıcı Sürüm Arşivi)
+# Kodlar, README ve JSON'lar Git'te kalabilir; ancak dev model ağırlığı engellenir:
+releases/**/model.pt
 
 # IDE ve İşletim Sistemi dosyaları
 .vscode/
