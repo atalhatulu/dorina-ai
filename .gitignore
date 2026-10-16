@@ -20,6 +20,8 @@ data/*.txt
 data/*.bin
 data/*.tar.gz
 data/*.json
+data/*.jsonl
+data/*.npz
 # data_manifest.json ufak ve önemli bir kimlik kartı olduğu için Git'e girmeli:
 !data/data_manifest.json
 
