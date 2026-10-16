@@ -56,7 +56,13 @@ def get_base_checkpoint():
         size_mb = os.path.getsize(c) / (1024 * 1024)
         print(f" [{idx}] ➔ {rel} ({size_mb:.1f} MB)")
     
-    choice = input(f"\nModel seçimi [Varsayılan sonuncu: {len(candidates)}]: ").strip()
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        choice = sys.argv[1].strip()
+    else:
+        try:
+            choice = input(f"\nModel seçimi [Varsayılan sonuncu: {len(candidates)}]: ").strip()
+        except EOFError:
+            choice = ""
     idx = int(choice) - 1 if choice.isdigit() and 1 <= int(choice) <= len(candidates) else len(candidates) - 1
     return candidates[idx]
 

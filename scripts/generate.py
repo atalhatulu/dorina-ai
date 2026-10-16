@@ -145,10 +145,20 @@ def generate_text(prompt, max_tokens=80, temperature=0.7, top_k=40, repetition_p
         next_id = torch.multinomial(probs, num_samples=1)
         x = torch.cat((x, next_id), dim=1)
         
+        # Standart EOT (<|endoftext|>) kontrolü
         if next_id.item() == enc.eot_token:
             break
             
-    return enc.decode(x[0].tolist())
+        # ChatML <|im_end|> durma kontrolü (oluşan son metin üzerinden)
+        curr_decoded = enc.decode(x[0].tolist())
+        if "<|im_end|>" in curr_decoded:
+            break
+            
+    full_output = enc.decode(x[0].tolist())
+    # Eğer çıktı içinde <|im_end|> varsa o noktada temizce kes
+    if "<|im_end|>" in full_output:
+        full_output = full_output.split("<|im_end|>")[0].strip()
+    return full_output
 
 @torch.no_grad()
 def predict_next_words(prompt, top_n=5):
@@ -200,9 +210,10 @@ def main():
         print("=" * 40)
         print(" [1] ➔ Cümle / Hikaye Tamamlama (Serbest Üretim)")
         print(" [2] ➔ Sonraki Kelime Tahmin Testi (Olasılık Dağılımı)")
+        print(" [3] ➔ 💬 Dorina Asistan ile Sohbet (ChatML)")
         print(" [q] ➔ Çıkış")
         
-        mode = input("Seçiminiz (1/2/q): ").strip().lower()
+        mode = input("Seçiminiz (1/2/3/q): ").strip().lower()
         
         if mode == "1":
             prompt = input("\nBaşlangıç metni girin: ").strip()
@@ -223,6 +234,28 @@ def main():
             if not prompt: 
                 continue
             predict_next_words(prompt)
+
+        elif mode == "3":
+            print("\n" + "=" * 50)
+            print("💬 DORINA ASİSTAN SOHBET MODU (Çıkış için 'exit' yazın)")
+            print("=" * 50)
+            while True:
+                user_msg = input("\n👤 Sen: ").strip()
+                if not user_msg:
+                    continue
+                if user_msg.lower() in ["exit", "quit", "q"]:
+                    break
+                chat_prompt = f"<|im_start|>user\n{user_msg}\n<|im_end|>\n<|im_start|>assistant\n"
+                print("\n🤖 Dorina: ", end="", flush=True)
+                full_reply = generate_text(chat_prompt, max_tokens=120, temperature=0.6, top_k=40)
+                # Sadece asistanın yanıt kısmını göster
+                if chat_prompt in full_reply:
+                    reply_clean = full_reply[len(chat_prompt):].strip()
+                else:
+                    reply_clean = full_reply.replace(chat_prompt, "").strip()
+                if "<|im_end|>" in reply_clean:
+                    reply_clean = reply_clean.split("<|im_end|>")[0].strip()
+                print(reply_clean)
             
         elif mode == "q":
             print("Görüşmek üzere!")
