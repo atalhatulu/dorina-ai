@@ -167,12 +167,17 @@ def estimate_sft_loss():
     
     # Train kaybı tahmini
     t_losses = []
+    # Train kaybı tahmini
+    t_losses = []
     for i, (xb, yb) in enumerate(train_loader):
         if i >= CFG["eval_iters"]: break
         xb, yb = xb.to(device, non_blocking=True), yb.to(device, non_blocking=True)
         with torch.amp.autocast(device_type="cuda" if device=="cuda" else "cpu", dtype=torch.float16, enabled=(device=="cuda")):
             logits, _ = model(xb)
-            loss = criterion(logits.view(-1, logits.size(-1)), yb.view(-1))
+            # Autoregressive shift: logits[:-1] predicts yb[1:]
+            shift_logits = logits[:, :-1, :].contiguous()
+            shift_labels = yb[:, 1:].contiguous()
+            loss = criterion(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
         t_losses.append(loss.item())
     losses["train"] = float(np.mean(t_losses)) if t_losses else 0.0
 
@@ -183,7 +188,10 @@ def estimate_sft_loss():
         xb, yb = xb.to(device, non_blocking=True), yb.to(device, non_blocking=True)
         with torch.amp.autocast(device_type="cuda" if device=="cuda" else "cpu", dtype=torch.float16, enabled=(device=="cuda")):
             logits, _ = model(xb)
-            loss = criterion(logits.view(-1, logits.size(-1)), yb.view(-1))
+            # Autoregressive shift: logits[:-1] predicts yb[1:]
+            shift_logits = logits[:, :-1, :].contiguous()
+            shift_labels = yb[:, 1:].contiguous()
+            loss = criterion(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
         v_losses.append(loss.item())
     losses["val"] = float(np.mean(v_losses)) if v_losses else 0.0
 
@@ -234,7 +242,10 @@ for iter_step in range(1, CFG["max_iters"] + 1):
     optimizer.zero_grad(set_to_none=True)
     with torch.amp.autocast(device_type="cuda" if device=="cuda" else "cpu", dtype=torch.float16, enabled=(device=="cuda")):
         logits, _ = model(xb)
-        loss = criterion(logits.view(-1, logits.size(-1)), yb.view(-1))
+        # Autoregressive shift: model token i'yi okuyup token i+1'i tahmin etmeli
+        shift_logits = logits[:, :-1, :].contiguous()
+        shift_labels = yb[:, 1:].contiguous()
+        loss = criterion(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
     scaler.scale(loss).backward()
     scaler.unscale_(optimizer)
