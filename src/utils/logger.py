@@ -11,7 +11,7 @@ import torch
 import pynvml
 
 class LabLogger:
-    def __init__(self, model_name: str, config: dict, total_steps: int, run_tag: str = None):
+    def __init__(self, model_name: str, config: dict, total_steps: int, run_tag: str = None, runs_dir: str = None):
         self.model_family = model_name
         self.config = config
         self.total_steps = total_steps
@@ -25,6 +25,35 @@ class LabLogger:
             self.has_nvml = True
         except Exception:
             self.has_nvml = False
+
+        if runs_dir is not None:
+            self.base_runs_dir = os.path.dirname(runs_dir)
+            self.runs_dir = runs_dir
+            self.run_tag = run_tag or os.path.basename(runs_dir)
+            os.makedirs(self.runs_dir, exist_ok=True)
+            self.best_val_loss = float("inf")
+            self.start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log_file_path = os.path.join(self.runs_dir, "training_log.json")
+            self.data = {
+                "model_metadata": {
+                    "model_family": self.model_family,
+                    "run_tag": self.run_tag,
+                    "start_time": self.start_datetime,
+                    "end_time": None,
+                    "completed": False,
+                    "best_val_loss": None,
+                    "total_steps": total_steps
+                },
+                "hyperparameters": config,
+                "system_info": {
+                    "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
+                    "torch_version": torch.__version__
+                },
+                "history": []
+            }
+            self._write_to_disk()
+            self._print_header()
+            return
 
         self.base_runs_dir = os.path.join("runs", self.model_family)
         os.makedirs(self.base_runs_dir, exist_ok=True)

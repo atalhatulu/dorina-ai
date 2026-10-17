@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorina-278M | Canlı Yapay Zeka Beyin & Telemetri Dashboard</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #060913; color: #e2e8f0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow-cyan { box-shadow: 0 0 35px -5px rgba(6, 182, 212, 0.25); }
+        .glow-purple { box-shadow: 0 0 35px -5px rgba(168, 85, 247, 0.25); }
+        .glow-emerald { box-shadow: 0 0 35px -5px rgba(16, 185, 129, 0.25); }
+        .pulse-live { animation: pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+        canvas#brainCanvas { border-radius: 1rem; width: 100%; height: 260px; }
+    </style>
+</head>
+<body class="p-3 md:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Top Header & Status -->
+        <header class="glass rounded-2xl p-6 glow-cyan flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-fuchsia-600 flex items-center justify-center font-bold text-3xl shadow-xl shadow-cyan-500/20">
+                    🧠
+                </div>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">DORINA-278M</h1>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-live"></span>
+                            CANLI EĞİTİM & BEYİN AKTİF
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-400 mt-1">Aşama 2: FineWeb-Edu Dünya Bilgisi & Ansiklopedi (Ultra-Hızlı RAM Akışı)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-xs text-slate-400">Canlı Telemetri: <span class="text-emerald-400 font-bold mono">1 sn</span></div>
+                    <div class="text-xs text-slate-400 mt-0.5">Son Sinyal: <span id="last-update" class="text-white font-mono font-medium">--:--:--</span></div>
+                </div>
+                <div class="px-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-right">
+                    <div class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Donanım</div>
+                    <div class="text-xs font-bold text-cyan-400">Dell G15 (RTX 4050)</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- HARDWARE REAL-TIME TELEMETRY (WATT, CLOCKS, UTIL, TEMP) -->
+        <div class="glass p-5 rounded-2xl glow-emerald space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h2 class="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                    ⚡ GPU Anlık Güç & Telemetri Monitörü (Direct NVML)
+                </h2>
+                <span class="text-xs text-slate-400 mono">Prizden Çekilen Güç & Saat Hızları</span>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 pt-1">
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">GPU Güç Tüketimi</div>
+                    <div class="text-2xl font-black text-amber-400 mono mt-0.5"><span id="tele-watt">25.0</span> <span class="text-xs font-normal text-slate-400">W</span></div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Limit: <span id="tele-watt-limit" class="text-slate-400 mono font-bold">115W</span></div>
+                </div>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">GPU Çekirdek Yükü</div>
+                    <div class="text-2xl font-black text-cyan-400 mono mt-0.5">%<span id="tele-util">100</span></div>
+                    <div class="w-full bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
+                        <div id="tele-util-bar" class="bg-cyan-400 h-1 rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">VRAM Bellek</div>
+                    <div class="text-2xl font-black text-purple-400 mono mt-0.5"><span id="tele-vram">5.9</span> <span class="text-xs font-normal text-slate-400">GB</span></div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Kapasite: 6.0 GB</div>
+                </div>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">GPU Sıcaklığı</div>
+                    <div class="text-2xl font-black text-emerald-400 mono mt-0.5"><span id="tele-temp">60</span>°C</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Durum: Serin & Güvenli</div>
+                </div>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">SM Çekirdek Hızı</div>
+                    <div class="text-2xl font-black text-sky-400 mono mt-0.5"><span id="tele-clock">2550</span> <span class="text-xs font-normal text-slate-400">MHz</span></div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Max Boost Aktif</div>
+                </div>
+                <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400 font-medium">Bellek Saat Hızı</div>
+                    <div class="text-2xl font-black text-fuchsia-400 mono mt-0.5"><span id="tele-mem-clock">8001</span> <span class="text-xs font-normal text-slate-400">MHz</span></div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">GDDR6 Tam Hız</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISUAL NEURAL BRAIN (CANLI NÖRON AĞI SİMÜLASYONU) -->
+        <div class="glass p-6 rounded-2xl glow-cyan space-y-4">
+            <div class="flex flex-col md:flex-row justify-between md:items-center gap-2 border-b border-slate-800 pb-3">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        🌌 Dorina-278M Canlı Nöral Beyin Simülasyonu (Neural Mesh)
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">18 Transformer Katmanı, 16 Attention Kafası ve 1024 d_model vektörlerinin anlık aktivasyon akışı</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs mono">
+                    <span class="inline-flex items-center gap-1.5 text-cyan-400">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                        Aktivasyonlar Akıyor
+                    </span>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-400">FPS: <span id="canvas-fps" class="text-white font-bold">60</span></span>
+                </div>
+            </div>
+            
+            <!-- Brain Canvas -->
+            <div class="relative bg-slate-950/90 rounded-xl overflow-hidden border border-slate-800/80">
+                <canvas id="brainCanvas"></canvas>
+                <div class="absolute bottom-3 left-4 text-[11px] mono text-slate-500 flex gap-4 pointer-events-none">
+                    <div>Katman 1: Embedding</div>
+                    <div>Katman 2-17: Self-Attention & MLP Blocks</div>
+                    <div>Katman 18: LM Head Logits</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Grid: Training Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Eğitim İlerlemesi</div>
+                <div class="text-xl font-bold text-white mono mt-1" id="kpi-step">1 / 10,000</div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                    <div id="kpi-progress-bar" class="bg-cyan-500 h-1.5 rounded-full transition-all duration-500" style="width: 1%"></div>
+                </div>
+            </div>
+            <div class="glass p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Validation Loss</div>
+                <div class="text-xl font-bold text-emerald-400 mono mt-1" id="kpi-loss">6.3879</div>
+                <div class="text-xs text-slate-500 mt-1">Öğrenme Hedefi: &lt; 5.0</div>
+            </div>
+            <div class="glass p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Perplexity (Zeka Katsayısı)</div>
+                <div class="text-xl font-bold text-indigo-400 mono mt-1" id="kpi-perp">594.6</div>
+                <div class="text-xs text-slate-500 mt-1">Daha Düşük = Daha Keskin</div>
+            </div>
+            <div class="glass p-4 rounded-xl">
+                <div class="text-xs text-slate-400">Tahmini Bitiş Süresi</div>
+                <div class="text-xl font-bold text-pink-400 mono mt-1" id="kpi-eta">~55 dk</div>
+                <div class="text-xs text-slate-500 mt-1">Hız: ~2,650 Token/sn</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Loss Chart -->
+            <div class="glass p-6 rounded-2xl glow-cyan">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2">
+                        📉 Kayıp Eğrisi (Train & Validation Loss)
+                    </h3>
+                    <span class="text-xs text-slate-400 mono">Kayıp düştükçe zeka artar</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="lossChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Perplexity Chart -->
+            <div class="glass p-6 rounded-2xl glow-purple">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-white text-base flex items-center gap-2">
+                        🎯 Perplexity Eğrisi (Belirsizlik Azalması)
+                    </h3>
+                    <span class="text-xs text-slate-400 mono">Modelin tahmin kesinliği</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="perpChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Sample Generation -->
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                    ✨ Modelin En Son Canlı Test Cümlesi (Inference)
+                </h3>
+                <span class="text-xs px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-semibold mono">Evaluation Test</span>
+            </div>
+            <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 text-sm mono text-slate-300 space-y-2">
+                <div class="text-cyan-400 font-bold">👉 Prompt: "The history of the Roman Empire demonstrates"</div>
+                <div class="text-slate-200 leading-relaxed italic" id="sample-output">
+                    "Model her 1.000 adımda bir bu istemi tamamlayıp öğrendiği dünya bilgisini buraya dökecektir..."
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let lossChart, perpChart;
+
+        // -------------------------------------------------------------
+        // 1. NEURAL MESH (CANLI NÖRON AĞI ANİMASYONU)
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('brainCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let nodes = [];
+        let pulses = [];
+
+        function resizeCanvas() {
+            width = canvas.width = canvas.parentElement.clientWidth;
+            height = canvas.height = 260;
+            initNodes();
+        }
+
+        function initNodes() {
+            nodes = [];
+            const layers = 18; // 18 Transformer layers
+            const nodesPerLayer = 7;
+            const xStep = (width - 100) / (layers - 1);
+            const yStep = (height - 60) / (nodesPerLayer - 1);
+
+            for (let l = 0; l < layers; l++) {
+                for (let n = 0; n < nodesPerLayer; n++) {
+                    nodes.push({
+                        layer: l,
+                        x: 50 + l * xStep,
+                        y: 30 + n * yStep + (Math.sin(l * 0.5 + n) * 8),
+                        baseY: 30 + n * yStep,
+                        radius: l === 0 || l === layers - 1 ? 4 : 2.5,
+                        activity: Math.random(),
+                        color: l === 0 ? '#38bdf8' : l === layers - 1 ? '#a855f7' : '#10b981'
+                    });
+                }
+            }
+        }
+
+        function spawnPulse() {
+            if (nodes.length === 0) return;
+            const startNodeIdx = Math.floor(Math.random() * 7); // First layer node
+            pulses.push({
+                x: nodes[startNodeIdx].x,
+                y: nodes[startNodeIdx].y,
+                layer: 0,
+                targetLayer: 1,
+                progress: 0,
+                speed: 0.08 + Math.random() * 0.05,
+                color: Math.random() > 0.5 ? '#38bdf8' : '#a855f7'
+            });
+        }
+
+        function drawBrain() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Draw Synaptic Connections (Transformer Attention Lines)
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < nodes.length; i++) {
+                const n1 = nodes[i];
+                if (n1.layer < 17) {
+                    for (let j = 0; j < nodes.length; j++) {
+                        const n2 = nodes[j];
+                        if (n2.layer === n1.layer + 1 && Math.abs(n1.baseY - n2.baseY) < 70) {
+                            ctx.strokeStyle = `rgba(56, 189, 248, ${0.05 + n1.activity * 0.12})`;
+                            ctx.beginPath();
+                            ctx.moveTo(n1.x, n1.y);
+                            ctx.lineTo(n2.x, n2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // 2. Draw Pulses (Aktivasyon Sinyalleri)
+            for (let p = pulses.length - 1; p >= 0; p--) {
+                const pulse = pulses[p];
+                pulse.progress += pulse.speed;
+
+                const curNodes = nodes.filter(n => n.layer === pulse.layer);
+                const nextNodes = nodes.filter(n => n.layer === pulse.targetLayer);
+
+                if (curNodes.length > 0 && nextNodes.length > 0) {
+                    const n1 = curNodes[Math.floor(pulse.progress * 3) % curNodes.length];
+                    const n2 = nextNodes[Math.floor(pulse.progress * 2) % nextNodes.length];
+                    
+                    const curX = n1.x + (n2.x - n1.x) * pulse.progress;
+                    const curY = n1.y + (n2.y - n1.y) * pulse.progress;
+
+                    ctx.fillStyle = pulse.color;
+                    ctx.shadowColor = pulse.color;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(curX, curY, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                if (pulse.progress >= 1) {
+                    pulse.layer++;
+                    pulse.targetLayer++;
+                    pulse.progress = 0;
+                    if (pulse.layer >= 17) {
+                        pulses.splice(p, 1);
+                    }
+                }
+            }
+
+            // 3. Draw Neurons
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                n.activity = 0.3 + 0.7 * Math.sin(Date.now() * 0.003 + n.layer + n.x);
+
+                ctx.fillStyle = n.color;
+                ctx.shadowColor = n.color;
+                ctx.shadowBlur = n.activity * 8;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            if (Math.random() < 0.4) spawnPulse();
+            requestAnimationFrame(drawBrain);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        requestAnimationFrame(drawBrain);
+
+        // -------------------------------------------------------------
+        // 2. CHARTS & REAL-TIME TELEMETRY FETCHING
+        // -------------------------------------------------------------
+        function initCharts() {
+            const ctxLoss = document.getElementById('lossChart').getContext('2d');
+            lossChart = new Chart(ctxLoss, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Train Loss', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', tension: 0.3, fill: true },
+                        { label: 'Val Loss', data: [], borderColor: '#10b981', borderDash: [5, 5], tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+
+            const ctxPerp = document.getElementById('perpChart').getContext('2d');
+            perpChart = new Chart(ctxPerp, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Perplexity', data: [], borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.15)', tension: 0.3, fill: true }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+        }
+
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch('/api/telemetry?t=' + Date.now());
+                if (!res.ok) return;
+                const d = await res.json();
+                
+                document.getElementById('tele-watt').innerText = d.power_w.toFixed(1);
+                document.getElementById('tele-watt-limit').innerText = d.power_limit_w.toFixed(0) + 'W';
+                document.getElementById('tele-util').innerText = d.gpu_util;
+                document.getElementById('tele-util-bar').style.width = d.gpu_util + '%';
+                document.getElementById('tele-vram').innerText = (d.vram_used_mb / 1024).toFixed(1);
+                document.getElementById('tele-temp').innerText = d.temp_c;
+                document.getElementById('tele-clock').innerText = d.clock_graphics_mhz;
+                document.getElementById('tele-mem-clock').innerText = d.clock_mem_mhz;
+                document.getElementById('last-update').innerText = new Date().toLocaleTimeString();
+
+                // CANLI SANYE SANİYE ADIM VE SÜRE GÜNCELLEMESİ (1 saniyede bir)
+                if (d.estimated_step) {
+                    document.getElementById('kpi-step').innerText = `${d.estimated_step.toLocaleString()} / 10,000`;
+                    const pct = Math.min((d.estimated_step / 10000) * 100, 100);
+                    document.getElementById('kpi-progress-bar').style.width = `${pct}%`;
+                    
+                    const remSteps = Math.max(10000 - d.estimated_step, 0);
+                    const remSec = Math.round(remSteps * 0.85);
+                    const remMin = Math.round(remSec / 60);
+                    document.getElementById('kpi-eta').innerText = remMin > 0 ? `~${remMin} dk` : 'Son adımlar!';
+                }
+            } catch (e) {}
+        }
+
+        async function fetchLogData() {
+            try {
+                const res = await fetch('/runs/dorina_v0.14_278m/run2/training_log.json?t=' + Date.now());
+                if (!res.ok) return;
+                const data = await res.json();
+                const history = data.history || [];
+                if (history.length === 0) return;
+
+                const latest = history[history.length - 1];
+                const step = latest.step || 0;
+                document.getElementById('kpi-step').innerText = `${step.toLocaleString()} / 10,000`;
+                const progressPct = Math.min((step / 10000) * 100, 100);
+                document.getElementById('kpi-progress-bar').style.width = `${progressPct}%`;
+
+                if (latest.val_loss) document.getElementById('kpi-loss').innerText = latest.val_loss.toFixed(4);
+                if (latest.perplexity) document.getElementById('kpi-perp').innerText = latest.perplexity.toFixed(1);
+
+                if (step > 1 && latest.elapsed_seconds) {
+                    const secPerStep = latest.elapsed_seconds / step;
+                    const remainingSteps = 10000 - step;
+                    const etaMin = Math.round((remainingSteps * secPerStep) / 60);
+                    document.getElementById('kpi-eta').innerText = etaMin > 0 ? `~${etaMin} dk` : 'Bitti!';
+                }
+
+                if (latest.sample_text) {
+                    document.getElementById('sample-output').innerText = `"${latest.sample_text}"`;
+                }
+
+                const labels = history.map(h => 'Adım ' + h.step);
+                lossChart.data.labels = labels;
+                lossChart.data.datasets[0].data = history.map(h => h.train_loss);
+                lossChart.data.datasets[1].data = history.map(h => h.val_loss);
+                lossChart.update();
+
+                perpChart.data.labels = labels;
+                perpChart.data.datasets[0].data = history.map(h => h.perplexity);
+                perpChart.update();
+            } catch (e) {}
+        }
+
+        window.onload = () => {
+            initCharts();
+            fetchTelemetry();
+            fetchLogData();
+            setInterval(fetchTelemetry, 1000); // 1 saniyede bir anlık GPU watt, ısı, saat hızları
+            setInterval(fetchLogData, 5000);   // 5 saniyede bir eğitim logları
+        };
+    </script>
+</body>
+</html>
