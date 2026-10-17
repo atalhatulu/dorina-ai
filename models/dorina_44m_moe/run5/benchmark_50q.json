@@ -1,0 +1,1246 @@
+{
+  "model_path": "C:\\Users\\Talha\\Documents\\GitHub\\dorina-ai\\models\\dorina_44m_moe\\run5\\model.pt",
+  "run_name": "run5",
+  "timestamp": "2026-10-17 21:01:07",
+  "total_score": 49.6,
+  "max_score": 100.0,
+  "category_scores": {
+    "Python Syntax": 14.9,
+    "Algorithms": 10.8,
+    "Math & Reasoning": 10.0,
+    "Science Knowledge": 4.6,
+    "Instruction Adherence": 9.3
+  },
+  "val_loss": null,
+  "step": null,
+  "detailed_results": [
+    {
+      "id": "py_01_reverse_str",
+      "category": "Python Syntax",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def reverse_string(s):\n    \"\"\"Return the reversed string.\"\"\"\n",
+      "completion": "return s[::-1]\n\n# Test\ns = 'Hello World!'\nprint(reverse_string(s)) # Output: 'HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+      "rubrics": [
+        {
+          "criterion": "slice_or_rev",
+          "desc": "Ters çevirme ifadesi",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "return_val",
+          "desc": "Sonuç döndürme",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_02_find_max",
+      "category": "Python Syntax",
+      "score": 1.2,
+      "max_score": 2.0,
+      "prompt": "def find_max(numbers):\n    \"\"\"Find maximum number in list.\"\"\"\n",
+      "completion": "# Initialize the list of numbers\nmax_num = numbers[0]\n\n# Iterate over the list\nfor num in numbers:\n    # Get the maximum",
+      "rubrics": [
+        {
+          "criterion": "max_logic",
+          "desc": "Maksimum arama mantığı",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "return_val",
+          "desc": "Dönüş ifadesi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_03_count_vowels",
+      "category": "Python Syntax",
+      "score": 1.2,
+      "max_score": 2.0,
+      "prompt": "def count_vowels(text):\n    \"\"\"Count vowels in text.\"\"\"\n    vowels = 'aeiou'\n",
+      "completion": "# Get all vowels in the string\nstring = \"Hello World\"\n\n# Get all vowels\nvowels = \"aeiouAEIOU\"\n\n# Check all vowels in the",
+      "rubrics": [
+        {
+          "criterion": "loop_or_sum",
+          "desc": "Sesli harf sayma döngüsü",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "return_val",
+          "desc": "Sayaç dönüşü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_04_bank_account_oop",
+      "category": "Python Syntax",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "class BankAccount:\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self.balance = balance\n\n    def deposit(self, amount):\n",
+      "completion": "self.balance += amount\n\n# Example usage\nbalance = balance * amount\nbalance = balance * amount\nbalance = balance * amount",
+      "rubrics": [
+        {
+          "criterion": "balance_add",
+          "desc": "Bakiye artırımı",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "return_val",
+          "desc": "Bakiye güncelleme/döndürme",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_05_list_comprehension",
+      "category": "Python Syntax",
+      "score": 0.8,
+      "max_score": 2.0,
+      "prompt": "def get_squares(n):\n    \"\"\"Return list of squares from 1 to n using list comprehension.\"\"\"\n    return [",
+      "completion": "int(x) for x in range(n)]\n\ndef get_ities(n):\n    \"\"\"Return a list of numbers from 1 to n\n\n    Returns:\n    list of integ",
+      "rubrics": [
+        {
+          "criterion": "comp_logic",
+          "desc": "Kare alma ifadesi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "range_iter",
+          "desc": "Range döngüsü",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_06_try_except",
+      "category": "Python Syntax",
+      "score": 1.0,
+      "max_score": 2.0,
+      "prompt": "def safe_divide(a, b):\n    \"\"\"Safely divide a by b, return None on ZeroDivisionError.\"\"\"\n    try:\n",
+      "completion": "try:\n return a / b\n except json.Error as e:\n return f'Error: {e}'\n except json.Error as e:\n return f'Error: {e}'\n except",
+      "rubrics": [
+        {
+          "criterion": "div_logic",
+          "desc": "Bölme işlemi",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "except_block",
+          "desc": "ZeroDivisionError yakalama",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "py_07_dict_counter",
+      "category": "Python Syntax",
+      "score": 1.2,
+      "max_score": 2.0,
+      "prompt": "def char_frequency(s):\n    \"\"\"Return dictionary of character frequencies.\"\"\"\n    counts = {}\n    for char in s:\n",
+      "completion": "if char in counts:\n  counts[char] += 1\n    else:\n  counts[char] = 1\n    counts[char] += 1\n    counts[char] = 1\n    count",
+      "rubrics": [
+        {
+          "criterion": "dict_inc",
+          "desc": "Sözlük frekans sayımı",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "return_dict",
+          "desc": "Sözlük dönüşü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "py_08_file_io",
+      "category": "Python Syntax",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def read_file_lines(filename):\n    \"\"\"Read all lines from file using with statement.\"\"\"\n    with open(",
+      "completion": "filename, 'r') as f:\n        for line in f.read():\n            f.write(line)\n    return f.read()\n\nif __name__ == '__main",
+      "rubrics": [
+        {
+          "criterion": "with_open",
+          "desc": "Dosya okuma bloğu",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "readlines",
+          "desc": "Satır okuma",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "py_09_lambda_sort",
+      "category": "Python Syntax",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def sort_by_length(words):\n    \"\"\"Sort list of strings by their length.\"\"\"\n    return sorted(words, key=",
+      "completion": "lambda x: x[1])\n\n# 1. Added a function to sort the list of strings by their length.\n# Code fixed. # Executing code.def s",
+      "rubrics": [
+        {
+          "criterion": "len_key",
+          "desc": "Uzunluk anahtarı",
+          "passed": true,
+          "points": 1.5,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "close_call",
+          "desc": "Fonksiyon kapanışı",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "py_10_remove_duplicates",
+      "category": "Python Syntax",
+      "score": 1.5,
+      "max_score": 2.0,
+      "prompt": "def remove_duplicates(items):\n    \"\"\"Remove duplicates while preserving or using set.\"\"\"\n",
+      "completion": "# Create a new list\nnew_list = []\n# Iterate through the list\nfor item in items:\n    # Check if the item is already in th",
+      "rubrics": [
+        {
+          "criterion": "set_or_loop",
+          "desc": "Tekrarları temizleme",
+          "passed": true,
+          "points": 1.5,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_res",
+          "desc": "Dönüş ifadesi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "algo_01_binary_search",
+      "category": "Algorithms",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def binary_search(arr, target):\n    \"\"\"Binary search algorithm.\"\"\"\n    low = 0\n    high = len(arr) - 1\n",
+      "completion": "def search(arr, target):\n    low = low - high\n    high = high - low\n    while low <= high:\n        mid = (low + high) //",
+      "rubrics": [
+        {
+          "criterion": "while_loop",
+          "desc": "While döngüsü",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        },
+        {
+          "criterion": "mid_calc",
+          "desc": "Orta nokta hesabı",
+          "passed": true,
+          "points": 0.6,
+          "max_points": 0.6
+        },
+        {
+          "criterion": "branching",
+          "desc": "Arama dallanması",
+          "passed": true,
+          "points": 0.6,
+          "max_points": 0.6
+        }
+      ]
+    },
+    {
+      "id": "algo_02_bubble_sort",
+      "category": "Algorithms",
+      "score": 1.0,
+      "max_score": 2.0,
+      "prompt": "def bubble_sort(arr):\n    \"\"\"Bubble sort algorithm.\"\"\"\n    n = len(arr)\n    for i in range(n):\n",
+      "completion": "# Last i elements are already in place\n for j in range(0, n-i-1):\n  # Last i elements are already in place\n for j in ran",
+      "rubrics": [
+        {
+          "criterion": "inner_loop",
+          "desc": "İç döngü",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "swap_cond",
+          "desc": "Takas mantığı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "algo_03_quick_sort",
+      "category": "Algorithms",
+      "score": 0.6,
+      "max_score": 2.0,
+      "prompt": "def quick_sort(arr):\n    \"\"\"Quick sort algorithm.\"\"\"\n    if len(arr) <= 1:\n        return arr\n",
+      "completion": "# Main array\narr = [1,2,3,4,5]\n\n# Main array\narr = [2, 3, 4, 5]\n\n# Function to sort the array\ndef sort_array_sort(arr):\n",
+      "rubrics": [
+        {
+          "criterion": "pivot_pick",
+          "desc": "Pivot seçimi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        },
+        {
+          "criterion": "partitions",
+          "desc": "Bölüntüleme",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.6
+        },
+        {
+          "criterion": "recursive_call",
+          "desc": "Özyineleme",
+          "passed": true,
+          "points": 0.6,
+          "max_points": 0.6
+        }
+      ]
+    },
+    {
+      "id": "algo_04_palindrome_check",
+      "category": "Algorithms",
+      "score": 0.5,
+      "max_score": 2.0,
+      "prompt": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n",
+      "completion": "# Create a list to store the reversed string\n    reversed_str = []\n    # Iterate through each character in the string\n  ",
+      "rubrics": [
+        {
+          "criterion": "clean_or_compare",
+          "desc": "Palindrom karşılaştırması",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_bool",
+          "desc": "Boolean dönüşü",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "algo_05_stack_data_structure",
+      "category": "Algorithms",
+      "score": 1.2,
+      "max_score": 2.0,
+      "prompt": "class Stack:\n    def __init__(self):\n        self.items = []\n    def push(self, item):\n        self.items.append(item)\n    def pop(self):\n",
+      "completion": "self.items.pop()\n\n# Let me examine if the code works\n# 1. Added a pop() method to pop a pop() method\n# Executing code...",
+      "rubrics": [
+        {
+          "criterion": "pop_logic",
+          "desc": "Pop işlemi",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "empty_check",
+          "desc": "Boşluk kontrolü / pop",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "algo_06_queue_data_structure",
+      "category": "Algorithms",
+      "score": 0.5,
+      "max_score": 2.0,
+      "prompt": "class Queue:\n    def __init__(self):\n        self.items = []\n    def enqueue(self, item):\n        self.items.append(item)\n    def dequeue(self):\n",
+      "completion": "return self.items == []\n\n# Create an instance of the class\nclass Car:\n    def __init__(self, name, model, year):\n       ",
+      "rubrics": [
+        {
+          "criterion": "dequeue_logic",
+          "desc": "Baştan çıkarma mantığı (pop(0))",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_val",
+          "desc": "Sonuç döndürme",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "algo_07_two_sum",
+      "category": "Algorithms",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "def two_sum(nums, target):\n    \"\"\"Find indices of two numbers that add up to target.\"\"\"\n    seen = {}\n    for i, num in enumerate(nums):\n",
+      "completion": "for j in range(i + 1, len(nums)):\n if nums[i] + nums[j] == target:\n return i\n    return -1\n\nnums = [2, 4, 8, 9, 9, 12, 1",
+      "rubrics": [
+        {
+          "criterion": "complement",
+          "desc": "Fark/tümleyen hesabı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "dict_lookup",
+          "desc": "Hash tablosu kontrolü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "algo_08_merge_sorted_lists",
+      "category": "Algorithms",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def merge_sorted(l1, l2):\n    \"\"\"Merge two sorted lists into one.\"\"\"\n    result = []\n    i = j = 0\n    while i < len(l1) and j < len(l2):\n",
+      "completion": "if l1[i] < l2[j]:\n result.append(l1[i])\n i += 1\n    j += 1\n    while i < len(l1):\n        if l1[i] < l2[j]:\n            ",
+      "rubrics": [
+        {
+          "criterion": "compare_append",
+          "desc": "Karşılaştırma ve ekleme",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "extend_remain",
+          "desc": "Kalanları birleştirme",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "algo_09_linked_list_node",
+      "category": "Algorithms",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "class ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n",
+      "completion": "# Create a function to check if the value is already present in the array\ndef is_prime(num):\n    if num < 2:\n        ret",
+      "rubrics": [
+        {
+          "criterion": "node_init",
+          "desc": "Node değer ataması",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "next_pointer",
+          "desc": "Next gösterici ataması",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "algo_10_linear_search",
+      "category": "Algorithms",
+      "score": 1.0,
+      "max_score": 2.0,
+      "prompt": "def linear_search(arr, target):\n    \"\"\"Return index of target or -1 if not found.\"\"\"\n",
+      "completion": "\"def find_index(arr, target):\n    \"\"\"Return index of target or -1 if not found\"\"\"\n if target == -1:\n    return -1\n else:",
+      "rubrics": [
+        {
+          "criterion": "loop_enum",
+          "desc": "Doğrusal arama döngüsü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "return_idx_or_neg",
+          "desc": "İndeks veya -1 dönüşü",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "math_01_is_prime",
+      "category": "Math & Reasoning",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def is_prime(n):\n    \"\"\"Check if an integer is a prime number.\"\"\"\n",
+      "completion": "def is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n    ",
+      "rubrics": [
+        {
+          "criterion": "base_case",
+          "desc": "1 ve altı taban kontrolü",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        },
+        {
+          "criterion": "div_loop",
+          "desc": "Bölünebilirlik döngüsü",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        },
+        {
+          "criterion": "return_bool",
+          "desc": "Boolean dönüş",
+          "passed": true,
+          "points": 0.4,
+          "max_points": 0.4
+        }
+      ]
+    },
+    {
+      "id": "math_02_factorial",
+      "category": "Math & Reasoning",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def factorial(n):\n    \"\"\"Calculate n factorial (n!).\"\"\"\n",
+      "completion": "def factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)\n\n# Test\nprint(factorial(5)",
+      "rubrics": [
+        {
+          "criterion": "base_case",
+          "desc": "Faktöriyel 0/1 tabanı",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "multiplication",
+          "desc": "Çarpım hesabı",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "math_03_fibonacci",
+      "category": "Math & Reasoning",
+      "score": 1.0,
+      "max_score": 2.0,
+      "prompt": "def fibonacci(n):\n    \"\"\"Generate the nth Fibonacci number.\"\"\"\n",
+      "completion": "a = 0\n b = 1\n if n < 0:\n    print(\"Incorrect input\")\n elif n == 0:\n    return a\n elif n == 1:\n    return b\n else:\n    fo",
+      "rubrics": [
+        {
+          "criterion": "base_case",
+          "desc": "Fibonacci tabanı",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "step_iter",
+          "desc": "Adım ilerletme",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "math_04_is_even",
+      "category": "Math & Reasoning",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def is_even(number):\n    \"\"\"Check if number is even.\"\"\"\n",
+      "completion": "if number % 2 == 0:\n    return \"even\"\n else:\n    return \"odd\"\n\nif __name__ == '__main__':\n    print(is_even(10))import r",
+      "rubrics": [
+        {
+          "criterion": "modulo_2",
+          "desc": "Mod 2 kontrolü",
+          "passed": true,
+          "points": 1.5,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_bool",
+          "desc": "Sonuç dönüşü",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "math_05_gcd_euclidean",
+      "category": "Math & Reasoning",
+      "score": 0.5,
+      "max_score": 2.0,
+      "prompt": "def gcd(a, b):\n    \"\"\"Calculate Greatest Common Divisor using Euclidean algorithm.\"\"\"\n    while b != 0:\n",
+      "completion": "if a == b:\n return b\n else:\n return a\n\na = 10\nb = 20\nprint(\"The Fibonacci sequence is:\", gcd(a, b))def get_max_min(arr):",
+      "rubrics": [
+        {
+          "criterion": "euclid_step",
+          "desc": "Öklid mod takası",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_a",
+          "desc": "EBOB dönüşü",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "math_06_arithmetic_mult",
+      "category": "Math & Reasoning",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is 15 multiplied by 4, and what is half of that result?\nAnswer: 15 multiplied by 4 is",
+      "completion": "4.\nAnswer: 15 divided by 5 is 5.\nAnswer: 20 divided by 5 is 5.\nAnswer: 20 divided by 5 is 5.\nAnswer: 20 divided by 5 is ",
+      "rubrics": [
+        {
+          "criterion": "sixty",
+          "desc": "60 tespiti",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "thirty",
+          "desc": "Yarısının 30 tespiti",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "math_07_power_func",
+      "category": "Math & Reasoning",
+      "score": 0.5,
+      "max_score": 2.0,
+      "prompt": "def power(base, exp):\n    \"\"\"Calculate base raised to exp.\"\"\"\n",
+      "completion": "def power(base, exp):\n    \"\"\"\n    Function to return the power of the power of the power of the power of the power of th",
+      "rubrics": [
+        {
+          "criterion": "power_op",
+          "desc": "Üs alma işlemi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "return_res",
+          "desc": "Dönüş ifadesi",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "math_08_is_power_of_two",
+      "category": "Math & Reasoning",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "def is_power_of_two(n):\n    \"\"\"Check if n is a power of 2 using bitwise operation.\"\"\"\n    return",
+      "completion": "n % 2 == 0\n\nif __name__ == '__main__':\n    n = int(input(\"Please enter a number: \"))\n    print(is_power_of_two(n))def is",
+      "rubrics": [
+        {
+          "criterion": "bitwise_check",
+          "desc": "Bitwise n & (n-1) == 0 kontrolü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "positive_check",
+          "desc": "Pozitiflik şartı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "math_09_sum_of_digits",
+      "category": "Math & Reasoning",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "def sum_of_digits(n):\n    \"\"\"Calculate sum of digits of an integer.\"\"\"\n    return sum(",
+      "completion": "int(n)) / len(int(n))def find_most_common_element(arr):\n    \"\"\"\n    This function takes a list of integers and returns a",
+      "rubrics": [
+        {
+          "criterion": "digit_sum",
+          "desc": "Rakam int dönüşümü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "str_iter",
+          "desc": "Stringe çevirip yineleme",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "math_10_average_calc",
+      "category": "Math & Reasoning",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "def calculate_average(numbers):\n    \"\"\"Return average of numbers list.\"\"\"\n    if not numbers:\n        return 0\n    return",
+      "completion": "sum(numbers) / len(numbers)\n\n# Test\nnumbers = [1,2,3,4,5]\naverage = calculate_average(numbers)\nprint(\"The average of the",
+      "rubrics": [
+        {
+          "criterion": "sum_len",
+          "desc": "Toplam / Eleman sayısı",
+          "passed": true,
+          "points": 1.5,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "float_div",
+          "desc": "Bölme operatörü",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sci_01_gravity",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is gravity and how does it work?\nAnswer: Gravity is",
+      "completion": "the only way to explain it. It is the answer to this question.\nIn general, the answer to this question is the answer to ",
+      "rubrics": [
+        {
+          "criterion": "force_attract",
+          "desc": "Kütleçekim ve kütle",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "pull_motion",
+          "desc": "Çekim etkisi",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "sci_02_photosynthesis",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: Explain photosynthesis in plants.\nAnswer: Photosynthesis is the process where plants convert",
+      "completion": "to plants in the form of a chemical reaction.\nWhen planting plants, the plant is in the form of a chemical reaction.\nThe",
+      "rubrics": [
+        {
+          "criterion": "inputs",
+          "desc": "Işık, su, CO2",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "outputs",
+          "desc": "Glikoz, oksijen",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "sci_03_ram_vs_disk",
+      "category": "Science Knowledge",
+      "score": 1.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is the difference between RAM and a hard drive (SSD/HDD)?\nAnswer: RAM is",
+      "completion": "not a hard drive. It is a hard drive. It is a hard drive, and it is not a hard drive. It is not a hard drive, but a hard",
+      "rubrics": [
+        {
+          "criterion": "ram_volatile",
+          "desc": "RAM geçici/hızlı hafıza",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "storage_perm",
+          "desc": "Kalıcı depolama",
+          "passed": true,
+          "points": 1.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "sci_04_dna",
+      "category": "Science Knowledge",
+      "score": 0.8,
+      "max_score": 2.0,
+      "prompt": "Question: What does DNA stand for and what is its role in living organisms?\nAnswer: DNA stands for",
+      "completion": "genes that are used to make proteins.\nAnswer: DNA stands for genes that are used to make proteins.\nAnswer: DNA stands fo",
+      "rubrics": [
+        {
+          "criterion": "dna_name",
+          "desc": "Deoxyribonucleic acid",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "dna_role",
+          "desc": "Genetik bilgi rolü",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "sci_05_stack_vs_heap",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: In computer memory management, what is the difference between Stack and Heap?\nAnswer: The Stack is used for",
+      "completion": "computer programs, where the memory is used for the computer.\nThe memory is used for memory management, where it is used",
+      "rubrics": [
+        {
+          "criterion": "stack_usage",
+          "desc": "Stack yerel/fonksiyon hafızası",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "heap_usage",
+          "desc": "Heap dinamik bellek",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "sci_06_cpu_cache",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is CPU Cache (L1/L2/L3) and why is it needed?\nAnswer: CPU cache is a",
+      "completion": "device that can be used to process the memory of the memory. The memory is then processed to a memory memory of the memo",
+      "rubrics": [
+        {
+          "criterion": "cache_speed",
+          "desc": "Yüksek hızlı önbellek",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "cache_purpose",
+          "desc": "RAM gecikmesini azaltma",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "sci_07_big_o",
+      "category": "Science Knowledge",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is Big O notation used for in computer science?\nAnswer: Big O notation describes the",
+      "completion": "timeframe that is used by computer science to explain the timeframe.\nAnswer: Big O notation is used to solve the problem",
+      "rubrics": [
+        {
+          "criterion": "complexity",
+          "desc": "Zaman/alan karmaşıklığı",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "input_growth",
+          "desc": "Girdi büyüdükçe ölçeklenme",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "sci_08_speed_of_light",
+      "category": "Science Knowledge",
+      "score": 0.8,
+      "max_score": 2.0,
+      "prompt": "Question: What is the speed of light in a vacuum?\nAnswer: The speed of light in a vacuum is approximately",
+      "completion": "1.5 meters per second.\nAnswer: The speed of light in a vacuum is about 2.5 meters per second.\nAnswer: The speed of light",
+      "rubrics": [
+        {
+          "criterion": "speed_val",
+          "desc": "300.000 km/s veya 3x10^8 m/s",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "speed_unit",
+          "desc": "Birim doğruluğu",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "sci_09_water_formula",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is the chemical formula for water and what elements does it contain?\nAnswer: Water is",
+      "completion": "the chemical formula for water. Water is the chemical formula for the water and it is the chemical formula for the react",
+      "rubrics": [
+        {
+          "criterion": "h2o",
+          "desc": "H2O formülü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "elements",
+          "desc": "Hidrojen ve oksijen",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "sci_10_compiler_vs_interpreter",
+      "category": "Science Knowledge",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Question: What is the difference between a Compiler and an Interpreter?\nAnswer: A compiler translates",
+      "completion": "to a Compiler.\nAnswer: A Compiler is a Concrete Compiler.\nAnswer: A Compiler is a Concrete Compiler.\nAnswer: A Compiler ",
+      "rubrics": [
+        {
+          "criterion": "compiler_action",
+          "desc": "Tüm kodu makine koduna derleme",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "interpreter_action",
+          "desc": "Satır satır yorumlama",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "inst_01_json_status",
+      "category": "Instruction Adherence",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "Generate a valid JSON object with keys 'status' (value 'success') and 'code' (value 200):\n{\n",
+      "completion": "'name': 'John',\n 'code': '123',\n 'code': '123',\n 'code': '123',\n 'code': '123',\n 'code': '123',\n 'code': '123',\n 'code':",
+      "rubrics": [
+        {
+          "criterion": "status_val",
+          "desc": "'status': 'success'",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        },
+        {
+          "criterion": "code_val",
+          "desc": "'code': 200",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.0
+        }
+      ]
+    },
+    {
+      "id": "inst_02_chatml_capital",
+      "category": "Instruction Adherence",
+      "score": 0.8,
+      "max_score": 2.0,
+      "prompt": "<|im_start|>user\nWhat is the capital of France?<|im_end|>\n<|im_start|>assistant\n",
+      "completion": "What is the capital of France?\nThe capital of France is the capital of France.\nWhat is the capital of France?\nThe capita",
+      "rubrics": [
+        {
+          "criterion": "paris_answer",
+          "desc": "Paris cevabı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "no_endless_loop",
+          "desc": "Bağlam tutarlılığı",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "inst_03_summary_one_sentence",
+      "category": "Instruction Adherence",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "Summarize in one sentence: 'Artificial neural networks are computing systems inspired by biological neural networks in animal brains.'\nSummary:",
+      "completion": "In this article, we will discuss the mechanisms behind the role of neural networks in the brain. In this article, we wil",
+      "rubrics": [
+        {
+          "criterion": "neural_kw",
+          "desc": "Anahtar kavramlar",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "sentence_fmt",
+          "desc": "Cümle formu",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "inst_04_bullet_points",
+      "category": "Instruction Adherence",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "List 3 advantages of using Python:\n1.",
+      "completion": "Use the built-in `py` library to read the data.\n2. Use the `py` library to read data and create a new dictionary.\n3. Use",
+      "rubrics": [
+        {
+          "criterion": "item_1",
+          "desc": "1. Madde",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        },
+        {
+          "criterion": "item_2",
+          "desc": "2. Madde",
+          "passed": true,
+          "points": 0.6,
+          "max_points": 0.6
+        },
+        {
+          "criterion": "py_traits",
+          "desc": "Python avantajları",
+          "passed": true,
+          "points": 0.6,
+          "max_points": 0.6
+        }
+      ]
+    },
+    {
+      "id": "inst_05_boolean_only",
+      "category": "Instruction Adherence",
+      "score": 2.0,
+      "max_score": 2.0,
+      "prompt": "Is the sun a star? Answer with only True or False.\nAnswer:",
+      "completion": "The sun is the sun.\nThe sun is the sun.\nThe sun is the sun.\nThe sun is the sun.\nThe sun is the sun.\nThe sun is the sun.\n",
+      "rubrics": [
+        {
+          "criterion": "true_ans",
+          "desc": "True yanıtı",
+          "passed": true,
+          "points": 1.5,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "concise",
+          "desc": "Net cevap",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "inst_06_markdown_code_block",
+      "category": "Instruction Adherence",
+      "score": 0.8,
+      "max_score": 2.0,
+      "prompt": "Write a python hello world inside markdown code blocks:\n```python\n",
+      "completion": "# Run the code\nprint(python.py\\_name())import requests\nfrom bs4 import BeautifulSoup\n\n# Get the HTML content\nhtml\\_conte",
+      "rubrics": [
+        {
+          "criterion": "print_hello",
+          "desc": "print('Hello World')",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "close_ticks",
+          "desc": "Kod bloğu kapanışı (```)",
+          "passed": true,
+          "points": 0.8,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "inst_07_type_hints",
+      "category": "Instruction Adherence",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "def add_numbers(x: int, y: int) -> int:\n    \"\"\"Add two integers with type hints.\"\"\"\n",
+      "completion": "# Get the maximum number of elements in the list\n\tmax_number = x[0]\n\t# Add the maximum number to the list\n\tmax_number = ",
+      "rubrics": [
+        {
+          "criterion": "typed_return",
+          "desc": "Toplama dönüşü",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "indent",
+          "desc": "Girinti",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "inst_08_sql_query",
+      "category": "Instruction Adherence",
+      "score": 1.2,
+      "max_score": 2.0,
+      "prompt": "Write a SQL query to select all users older than 18 from users table:\nSELECT",
+      "completion": "* FROM users WHERE name = 'John';def find_most_common_element(list1, list2):\n    list1 = []\n    list2 = []\n    for item ",
+      "rubrics": [
+        {
+          "criterion": "select_from",
+          "desc": "SELECT * FROM users",
+          "passed": true,
+          "points": 1.2,
+          "max_points": 1.2
+        },
+        {
+          "criterion": "where_clause",
+          "desc": "WHERE age > 18",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.8
+        }
+      ]
+    },
+    {
+      "id": "inst_09_csv_format",
+      "category": "Instruction Adherence",
+      "score": 0.5,
+      "max_score": 2.0,
+      "prompt": "Create a 2-line CSV of name and age:\nname,age\n",
+      "completion": "age,age,age,address,address,address, address, address, address, address, address, address, address, address, address, ad",
+      "rubrics": [
+        {
+          "criterion": "csv_row",
+          "desc": "İsim,Yaş formatı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "delimiter",
+          "desc": "Virgül ayrımı",
+          "passed": true,
+          "points": 0.5,
+          "max_points": 0.5
+        }
+      ]
+    },
+    {
+      "id": "inst_10_opposite_word",
+      "category": "Instruction Adherence",
+      "score": 0.0,
+      "max_score": 2.0,
+      "prompt": "What is the opposite of 'hot'? Answer with one word:\n",
+      "completion": "The word \"hot\" is often used to describe the way the weather changes, as well as to what the weather changes in the weat",
+      "rubrics": [
+        {
+          "criterion": "cold_ans",
+          "desc": "Cold cevabı",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 1.5
+        },
+        {
+          "criterion": "single_word",
+          "desc": "Tek kelime",
+          "passed": false,
+          "points": 0.0,
+          "max_points": 0.5
+        }
+      ]
+    }
+  ]
+}
