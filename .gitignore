@@ -1,38 +1,48 @@
-# Python önbellek ve derleme dosyaları
+# Python onbellek ve derleme dosyalari
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 
-# Sanal ortam klasörleri
+# Sanal ortam klasorleri
 .venv/
 venv/
 ENV/
 
-# Model ağırlıkları ve büyük checkpoint'ler (GitHub boyut sınırları için)
+# Model agirliklari ve buyuk binary dosyalar (GitHub 100MB sinirini asmamak icin)
 *.pt
+*.pth
 *.ckpt
+*.bin
+*.wav
+*.mp3
+*.log
 checkpoints/
+models/
+archive/
 
 # Veri setleri ve Binary Cache
-data/*.txt
-data/*.bin
-data/*.tar.gz
-data/*.json
-data/*.jsonl
-data/*.npz
-# data_manifest.json ufak ve önemli bir kimlik kartı olduğu için Git'e girmeli:
-!data/data_manifest.json
+data/
+dataset/
+*.jsonl
 
-# Dinamik Laboratuvar Koşuları (Eğitim logları, ara grafikler ve denemeler)
+# Kaggle gecici yukleme ve dataset klasorleri
+kaggle_v4_dataset_upload/
+kaggle_v4_shard2_dataset/
+kaggle_v4_shard3_dataset/
+
+# Ses ve ara test ciktilari
+voice/models/
+voice/checkpoints/
+
+# Dinamik Laboratuvar Kosulari
 runs/
 
-# Releases (Kalıcı Sürüm Arşivi)
-# Kodlar, README ve JSON'lar Git'te kalabilir; ancak dev model ağırlığı engellenir:
+# Releases
 releases/**/model.pt
 
-# IDE ve İşletim Sistemi dosyaları
+# IDE ve Isletim Sistemi dosyalari
 .vscode/
 .idea/
 .DS_Store

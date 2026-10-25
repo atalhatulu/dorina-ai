@@ -1,0 +1,77 @@
+[
+  {
+    "test": "vocab_boyutu",
+    "status": "PASS",
+    "detail": "32768 token (hedef 32768), ID'ler ardışık=True"
+  },
+  {
+    "test": "ozel_tokenlar",
+    "status": "PASS",
+    "detail": "143 beklenen, hatalı: []"
+  },
+  {
+    "test": "rakamlar_tekil",
+    "status": "PASS",
+    "detail": "[]"
+  },
+  {
+    "test": "turkce_harfler_tek_token",
+    "status": "WARN",
+    "detail": "zorunlu eksik: [] | büyük harf uyarı: ['Ğ']"
+  },
+  {
+    "test": "kesme_isareti",
+    "status": "PASS",
+    "detail": "TR=['TÃ¼rkiye', \"'de\", 'ĠÄ°stanbul', \"'da\", 'ĠAnkara', \"'dan\"] EN=['I', 'Ġdon', \"'t\", 'Ġknow', ',', 'Ġthey', \"'d\", 'Ġgo', ',', 'ĠDON', \"'T\"]"
+  },
+  {
+    "test": "nfc_degismezligi",
+    "status": "PASS",
+    "detail": "farklı çıkanlar: []"
+  },
+  {
+    "test": "girinti",
+    "status": "PASS",
+    "detail": "mod=split, izin<=2; (boşluk,token)=[(2, 2), (4, 2), (8, 2), (12, 2), (16, 2), (24, 2)]; zorunlu hata=[], uyarı=[]"
+  },
+  {
+    "test": "roundtrip_fuzz",
+    "status": "PASS",
+    "detail": "20000 örnek, hata=0 []"
+  },
+  {
+    "test": "verimlilik_english",
+    "status": "INFO",
+    "detail": "4.36 byte/token, 1.43 token/kelime"
+  },
+  {
+    "test": "verimlilik_code",
+    "status": "INFO",
+    "detail": "3.92 byte/token, 2.89 token/kelime"
+  },
+  {
+    "test": "verimlilik_math",
+    "status": "INFO",
+    "detail": "3.68 byte/token, 1.77 token/kelime"
+  },
+  {
+    "test": "verimlilik_turkish",
+    "status": "INFO",
+    "detail": "3.86 byte/token, 2.14 token/kelime"
+  },
+  {
+    "test": "kullanilmayan_token_orani",
+    "status": "INFO",
+    "detail": "2.2% (örnekte hiç görülmeyen)"
+  },
+  {
+    "test": "en_uzun_tokenlar",
+    "status": "INFO",
+    "detail": "'##############################################################################' | ' =========================================================================' | '========================================================================' | '########################################################################' | '#----------------------------------------------------------------' | ' ----------------------------------------------------------------' | '================================================================' | '################################################################' | '----------------------------------------------------------------' | '                                \\n' | ' ################################' | ' --------------------------------' | '________________________________' | '********************************' | '================================' | '################################' | '--------------------------------' | '                               ' | '                              ' | '                             ' | '                            ' | '                           ' | '                          ' | '                         ' | '------------------------'"
+  },
+  {
+    "test": "encode_hizi",
+    "status": "INFO",
+    "detail": "4.3 MB/s"
+  }
+]

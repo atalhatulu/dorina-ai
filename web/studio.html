@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dorina AI Studio | 180.6M MoE Command Center</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d'
+            },
+            surface: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 1);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px -5px rgba(34, 197, 94, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-surface-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center glow-brand shadow-lg">
+          <i data-lucide="cpu" class="w-6 h-6 text-slate-950 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Dorina AI Studio</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-500/10 text-brand-500 border border-brand-500/20">V3.0 MoE</span>
+          </div>
+          <p class="text-xs text-slate-400">180.6M Parametre &bull; 32 Uzman Top-2 &bull; 2.4B Token Havuzu</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 bg-surface-950 p-1 rounded-xl border border-slate-800">
+        <button onclick="switchTab('chat')" id="tab-chat" class="px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-brand-600 text-white">
+          <i data-lucide="message-square" class="w-4 h-4"></i>
+          <span>Canlı Sohbet</span>
+        </button>
+        <button onclick="switchTab('models')" id="tab-models" class="px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Model Havuzu</span>
+        </button>
+        <button onclick="switchTab('visualizer')" id="tab-visualizer" class="px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+          <i data-lucide="network" class="w-4 h-4"></i>
+          <span>32 Uzman (MoE)</span>
+        </button>
+        <button onclick="switchTab('benchmarks')" id="tab-benchmarks" class="px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white">
+          <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+          <span>Altın Benchmark</span>
+        </button>
+      </nav>
+
+      <!-- Hardware & Model Pill -->
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex flex-col text-right">
+          <span id="active-model-name" class="text-xs font-semibold text-brand-400">Yükleniyor...</span>
+          <span id="hw-status" class="text-[10px] text-slate-500 font-mono">CUDA Aktif</span>
+        </div>
+        <div class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col">
+
+    <!-- TAB 1: CHAT -->
+    <section id="view-chat" class="flex-1 flex flex-col gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1">
+        
+        <!-- Chat History -->
+        <div class="lg:col-span-3 bg-surface-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+          <div class="p-3 border-b border-slate-800 bg-surface-950/40 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+              <i data-lucide="terminal" class="w-4 h-4 text-brand-400"></i>
+              <span>Oturum: ChatML &bull; Dorina V3 Native</span>
+            </div>
+            <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-red-400 transition flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Temizle</span>
+            </button>
+          </div>
+
+          <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 max-h-[calc(100vh-280px)]">
+            <!-- Welcome message -->
+            <div class="flex gap-3 text-slate-300">
+              <div class="w-8 h-8 rounded-lg bg-brand-600/20 text-brand-400 border border-brand-500/30 flex items-center justify-center shrink-0">
+                <i data-lucide="bot" class="w-4 h-4"></i>
+              </div>
+              <div class="bg-surface-800/60 border border-slate-800/80 rounded-2xl p-3.5 text-sm max-w-2xl">
+                <p class="font-semibold text-white mb-1">Merhaba Talha! Ben Dorina V3.</p>
+                <p>180.6M MoE mimarim, 32 uzmanım ve Shard 4 Targeted Medicine aşısıyla yenilenmiş ağırlıklarımla hazırım. Kodlama, algoritmalar veya Türkçe mantık sorularını sorabilirsin!</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="p-3 border-t border-slate-800 bg-surface-950/60">
+            <form onsubmit="handleChatSubmit(event)" class="flex gap-2">
+              <input type="text" id="chat-input" placeholder="Dorina'ya Türkçe bir soru veya algoritma yazdır..." 
+                     class="flex-1 bg-surface-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition">
+              <button type="submit" id="send-btn" class="bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold px-5 rounded-xl transition flex items-center justify-center gap-2">
+                <span>Gönder</span>
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+            </form>
+            <div class="flex items-center justify-between mt-2 text-[11px] text-slate-500 px-1">
+              <span id="tok-stat">Hız: 0 tok/s | Üretilen: 0 token</span>
+              <span>Model: <span id="chat-model-label" class="text-brand-400 font-mono">v3_medicine_hybrid</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inference Settings Sidebar -->
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4 shadow-xl">
+          <h2 class="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i>
+            <span>İnferans Ayarları</span>
+          </h2>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-400">Temperature</span>
+              <span id="val-temp" class="text-brand-400 font-mono">0.40</span>
+            </div>
+            <input type="range" id="input-temp" min="0.05" max="1.0" step="0.05" value="0.40" 
+                   oninput="document.getElementById('val-temp').innerText = parseFloat(this.value).toFixed(2)"
+                   class="w-full accent-brand-500">
+            <p class="text-[10px] text-slate-500 mt-0.5">Düşük = Daha kesin kod, Yüksek = Yaratıcı metin</p>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-400">Top-K Örnekleme</span>
+              <span id="val-topk" class="text-brand-400 font-mono">25</span>
+            </div>
+            <input type="range" id="input-topk" min="1" max="100" step="1" value="25" 
+                   oninput="document.getElementById('val-topk').innerText = this.value"
+                   class="w-full accent-brand-500">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-400">Maksimum Token</span>
+              <span id="val-max-tokens" class="text-brand-400 font-mono">180</span>
+            </div>
+            <input type="range" id="input-max-tokens" min="30" max="400" step="10" value="180" 
+                   oninput="document.getElementById('val-max-tokens').innerText = this.value"
+                   class="w-full accent-brand-500">
+          </div>
+
+          <!-- Fast Question Prompts -->
+          <div class="border-t border-slate-800 pt-3 flex flex-col gap-1.5">
+            <span class="text-xs font-semibold text-slate-400 mb-1">Hızlı Test Soruları</span>
+            <button onclick="fillAndSend('Ahmetin 3 kardesi var: Ali, Veli ve Ayse. Aysenin kac erkek kardesi vardir?')" 
+                    class="text-left text-xs bg-surface-950/60 hover:bg-surface-800 text-slate-300 p-2 rounded-lg border border-slate-800/80 transition">
+              💡 Ahmet'in Kardeşleri (Mantık)
+            </button>
+            <button onclick="fillAndSend('Python ile iki listenin kesişimini bulan fonksiyon yaz.')" 
+                    class="text-left text-xs bg-surface-950/60 hover:bg-surface-800 text-slate-300 p-2 rounded-lg border border-slate-800/80 transition">
+              ⚡ Liste Kesişimi (Python)
+            </button>
+            <button onclick="fillAndSend('Stack ile Heap bellek arasındaki farklar nelerdir?')" 
+                    class="text-left text-xs bg-surface-950/60 hover:bg-surface-800 text-slate-300 p-2 rounded-lg border border-slate-800/80 transition">
+              🧬 Stack vs Heap (Shard 4 İlacı)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: MODEL POOL -->
+    <section id="view-models" class="hidden flex-1 flex flex-col gap-4">
+      <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white">Dorina Model Havuzu & Checkpointler</h2>
+          <p class="text-xs text-slate-400">Tek tıkla aktif modeli değiştirin (Hot-Swap) ve farklı safhaları kıyaslayın.</p>
+        </div>
+      </div>
+      <div id="model-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- JS dynamically renders cards -->
+      </div>
+    </section>
+
+    <!-- TAB 3: 32 EXPERTS VISUALIZER -->
+    <section id="view-visualizer" class="hidden flex-1 flex flex-col gap-4">
+      <div class="border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white">32 Yönlendirilmiş Uzman (MoE Topology)</h2>
+        <p class="text-xs text-slate-400">Her token üretilirken devreye giren Top-2 yönlendirilmiş ve 1 daimi paylaşımlı uzman matrisi.</p>
+      </div>
+      <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 flex flex-col gap-6">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Toplam Katman: 12 Layer</span>
+          <span>Her Katmanda: 32 Yönlendirilmiş + 1 Paylaşımlı Uzman</span>
+          <span class="text-brand-400 font-mono font-bold">Aktif Token Başı: ~40M Parametre</span>
+        </div>
+        <div id="experts-grid" class="grid grid-cols-4 sm:grid-cols-8 gap-3">
+          <!-- 32 Expert Boxes Generated Dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: BENCHMARK KARNESİ -->
+    <section id="view-benchmarks" class="hidden flex-1 flex flex-col gap-4">
+      <div class="border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white">50 Soruluk Altın Sınav Evrimi</h2>
+        <p class="text-xs text-slate-400">Shard 1'den nihai 63.9 rekoruna kadar tüm benchmark sonuçları.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-4 lg:col-span-2">
+          <canvas id="benchmarkChart" height="200"></canvas>
+        </div>
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+          <h3 class="text-sm font-bold text-white">🏆 Zirve Karne: Dorina V3 Hybrid</h3>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between p-2 rounded bg-surface-950 border border-slate-800">
+              <span class="text-slate-400">Genel Skor</span>
+              <span class="text-brand-400 font-bold">63.9 / 100</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-surface-950 border border-slate-800">
+              <span class="text-slate-400">Instruction Adherence</span>
+              <span class="text-emerald-400 font-bold">16.1 / 20 (%80.5)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-surface-950 border border-slate-800">
+              <span class="text-slate-400">Algorithms</span>
+              <span class="text-emerald-400 font-bold">16.7 / 20 (%83.5)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-surface-950 border border-slate-800">
+              <span class="text-slate-400">Python Syntax</span>
+              <span class="text-emerald-400 font-bold">13.5 / 20 (%67.5)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-surface-950 border border-slate-800">
+              <span class="text-slate-400">Math & Reasoning</span>
+              <span class="text-emerald-400 font-bold">12.0 / 20 (%60.0)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+    let currentTab = 'chat';
+    let availableModels = {};
+    let ws = null;
+
+    function switchTab(tab) {
+      ['chat', 'models', 'visualizer', 'benchmarks'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).className = 'px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white';
+      });
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).className = 'px-4 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-brand-600 text-white';
+      currentTab = tab;
+      if (tab === 'benchmarks') initBenchmarkChart();
+    }
+
+    // Load Models
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/models');
+        const data = await res.json();
+        availableModels = data.models;
+        document.getElementById('active-model-name').innerText = availableModels[data.current].name;
+        document.getElementById('chat-model-label').innerText = data.current;
+        renderModelCards(data.current, data.models);
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    function renderModelCards(activeKey, models) {
+      const container = document.getElementById('model-cards');
+      container.innerHTML = '';
+      for (const [key, m] of Object.entries(models)) {
+        const isActive = (key === activeKey);
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-2xl border transition ${isActive ? 'bg-brand-950/20 border-brand-500/50 glow-brand' : 'bg-surface-900 border-slate-800 hover:border-slate-700'}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h3 class="font-bold text-white text-sm">${m.name}</h3>
+              <p class="text-xs text-slate-400 mt-0.5">${m.desc}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${isActive ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+              Skor: ${m.score}
+            </span>
+          </div>
+          <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-800/80 text-xs">
+            <span class="text-slate-500 font-mono">${m.params}</span>
+            <button onclick="switchModelApi('${key}')" ${isActive ? 'disabled' : ''} 
+                    class="px-3 py-1 rounded-lg font-medium transition ${isActive ? 'bg-slate-800 text-brand-400 cursor-default' : 'bg-brand-600 hover:bg-brand-500 text-slate-950'}">
+              ${isActive ? '✓ Aktif' : 'Kullanıma Al'}
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    async function switchModelApi(key) {
+      try {
+        document.getElementById('active-model-name').innerText = "Model değiştiriliyor...";
+        const res = await fetch(`/api/models/switch/${key}`, { method: 'POST' });
+        if (res.ok) {
+          await loadModels();
+          alert(`Model başarıyla değiştirildi: ${key}`);
+        }
+      } catch(e) {
+        alert("Model değiştirilemedi: " + e);
+      }
+    }
+
+    // Visualizer experts render
+    function renderExperts() {
+      const grid = document.getElementById('experts-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 32; i++) {
+        const box = document.createElement('div');
+        box.id = `exp-${i}`;
+        box.className = 'p-3 rounded-xl bg-surface-950 border border-slate-800/80 flex flex-col items-center justify-center transition-all duration-300';
+        box.innerHTML = `
+          <span class="text-[10px] text-slate-500 font-mono">EXP-${i}</span>
+          <div class="w-2 h-2 rounded-full bg-slate-700 mt-1.5 transition" id="exp-dot-${i}"></div>
+        `;
+        grid.appendChild(box);
+      }
+    }
+
+    function animateRandomExperts() {
+      for (let i = 0; i < 32; i++) {
+        const dot = document.getElementById(`exp-dot-${i}`);
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-700 mt-1.5 transition';
+      }
+      // Top 2 pick
+      const pick1 = Math.floor(Math.random() * 32);
+      const pick2 = (pick1 + 3) % 32;
+      const d1 = document.getElementById(`exp-dot-${pick1}`);
+      const d2 = document.getElementById(`exp-dot-${pick2}`);
+      if (d1) d1.className = 'w-2 h-2 rounded-full bg-brand-400 scale-150 mt-1.5 transition';
+      if (d2) d2.className = 'w-2 h-2 rounded-full bg-emerald-400 scale-150 mt-1.5 transition';
+    }
+
+    // Chat handling
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      input.value = '';
+
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+
+      const aiMsgDiv = appendMessage('assistant', 'Düşünüyor...');
+      const animInterval = setInterval(animateRandomExperts, 120);
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            temperature: parseFloat(document.getElementById('input-temp').value),
+            top_k: parseInt(document.getElementById('input-topk').value),
+            max_tokens: parseInt(document.getElementById('input-max-tokens').value)
+          })
+        });
+
+        const data = await res.json();
+        clearInterval(animInterval);
+        aiMsgDiv.querySelector('.msg-content').innerText = data.reply || "Cevap üretilemedi.";
+        document.getElementById('tok-stat').innerText = `Hız: ${data.speed_tok_s} tok/s | Üretilen: ${data.tokens_generated} token (${data.duration_sec} sn)`;
+      } catch(err) {
+        clearInterval(animInterval);
+        aiMsgDiv.querySelector('.msg-content').innerText = "Hata oluştu: " + err;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function appendMessage(role, content) {
+      const container = document.getElementById('chat-messages');
+      const isUser = (role === 'user');
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex gap-3 text-slate-300 ${isUser ? 'flex-row-reverse' : ''}`;
+      wrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-lg ${isUser ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-brand-600/20 text-brand-400 border border-brand-500/30'} flex items-center justify-center shrink-0">
+          <i data-lucide="${isUser ? 'user' : 'bot'}" class="w-4 h-4"></i>
+        </div>
+        <div class="${isUser ? 'bg-brand-600/10 border border-brand-500/30 text-brand-100' : 'bg-surface-800/60 border border-slate-800/80 text-slate-200'} rounded-2xl p-3.5 text-sm max-w-2xl whitespace-pre-wrap leading-relaxed">
+          <div class="msg-content">${content}</div>
+        </div>
+      `;
+      container.appendChild(wrapper);
+      container.scrollTop = container.scrollHeight;
+      lucide.createIcons();
+      return wrapper;
+    }
+
+    function clearChat() {
+      document.getElementById('chat-messages').innerHTML = '';
+    }
+
+    function fillAndSend(q) {
+      document.getElementById('chat-input').value = q;
+      document.getElementById('send-btn').click();
+    }
+
+    // Chart
+    let chartInstance = null;
+    function initBenchmarkChart() {
+      if (chartInstance) return;
+      const ctx = document.getElementById('benchmarkChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Shard 1', 'Shard 2', 'Shard 3', 'Titan 4k', 'Titan Zirve', 'SFT Base', 'Final Hybrid (63.9)'],
+          datasets: [{
+            label: 'Genel Zeka Puanı (/100)',
+            data: [33.5, 39.6, 41.4, 44.9, 51.8, 60.5, 63.9],
+            backgroundColor: [
+              'rgba(100, 116, 139, 0.4)',
+              'rgba(100, 116, 139, 0.5)',
+              'rgba(100, 116, 139, 0.6)',
+              'rgba(59, 130, 246, 0.6)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(34, 197, 94, 1.0)'
+            ],
+            borderColor: 'rgba(34, 197, 94, 0.8)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#f8fafc' } }
+          }
+        }
+      });
+    }
+
+    window.onload = () => {
+      loadModels();
+      renderExperts();
+    };
+  </script>
+</body>
+</html>

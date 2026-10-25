@@ -41,12 +41,11 @@ torch.set_float32_matmul_precision('high')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # -----------------------------------------------------------------------------
-# 1. Dorina-MoE Aşama 2 (Shard 1 - 100M Turbo) Konfigürasyonu
+# 1. Dorina-MoE Aşama 2 (Shard 8 - 150M BÜYÜK FİNAL) Konfigürasyonu
 # -----------------------------------------------------------------------------
-# Turbo Mod: micro_batch_size = 12 (Batch 16'ya yakın, VRAM 3.6 GB, %100 güvenli hız)
 CONFIG = {
-    "name": "dorina_v0.31_moe_stage2_shard1",
-    "phase": "stage2_body_shard1_100m",
+    "name": "dorina_v0.38_moe_stage2_shard8_1b_final",
+    "phase": "stage2_body_shard8_150m_final",
     "n_layer": 6,
     "n_embd": 384,
     "n_head": 6,
@@ -56,11 +55,11 @@ CONFIG = {
     "top_k": 2,
     "micro_batch_size": 12,        # Turbo mod: Adım başına 6,144 token
     "grad_accum_steps": 1,
-    "max_iters": 16000,            # 16.000 adım = ~98.3M token (~48 dakika)
+    "max_iters": 24500,            # 24.500 adım = ~150.5M token (~65-70 dakika) ➔ 1 MİLYAR FİNAL!
     "eval_interval": 500,          # Her 500 adımda bir tam denetim
     "eval_iters": 25,
-    "lr": 2.5e-4,                  # Büyük gövde öğrenme oranı
-    "min_lr": 2.5e-5,
+    "lr": 1.5e-4,                  # Final kristalleşme öğrenme oranı
+    "min_lr": 1.0e-5,
     "warmup_iters": 300,
     "weight_decay": 0.1,
     "dropout": 0.05,
@@ -70,15 +69,15 @@ CONFIG = {
 # -----------------------------------------------------------------------------
 # 2. Veri Kümelerini Memmap Olarak Bağlama
 # -----------------------------------------------------------------------------
-train_bin_path = os.path.join(ROOT_DIR, "data", "stage2_shard1_100m_train.bin")
-val_bin_path   = os.path.join(ROOT_DIR, "data", "stage2_shard1_100m_val.bin")
+train_bin_path = os.path.join(ROOT_DIR, "data", "stage2_shard8_150m_train.bin")
+val_bin_path   = os.path.join(ROOT_DIR, "data", "stage2_shard8_150m_val.bin")
 
 print("\n" + "=" * 70)
-print("🦀 DORINA-MoE: AŞAMA 2 - SHARD 1 (100M TURBO EĞİTİMİ)")
+print("🦀 DORINA-MoE: AŞAMA 2 - SHARD 8 (150M BÜYÜK 1 MİLYAR FİNALİ - RUN 12)")
 print("=" * 70)
 
 if not (os.path.exists(train_bin_path) and os.path.exists(val_bin_path)):
-    print("⏳ Shard 1 Veri seti derlemesi bekleniyor...")
+    print("⏳ Shard 8 Veri seti derlemesi bekleniyor...")
     while not (os.path.exists(train_bin_path) and os.path.exists(val_bin_path)):
         time.sleep(3)
 
@@ -89,7 +88,7 @@ print(f"📦 Train Token: {len(train_data):,} (~{len(train_data)/1e6:.1f}M)")
 print(f"📦 Val Token:   {len(val_data):,} (~{len(val_data)/1e6:.1f}M)")
 
 # -----------------------------------------------------------------------------
-# 3. Model Başlatma ve Run 4'ten Devam (Warm Start)
+# 3. Model Başlatma ve Rekortmen Run 11'den Devam (Warm Start)
 # -----------------------------------------------------------------------------
 tok_path = os.path.join(ROOT_DIR, "tokenizer", "dorina_tokenizer_32k.json")
 tokenizer = Tokenizer.from_file(tok_path)
@@ -105,14 +104,16 @@ model = DorinaMoEGPT(
     dropout=CONFIG["dropout"]
 ).to(device)
 
-prev_ckpt_path = os.path.join(ROOT_DIR, "models", "dorina_44m_moe", "run4", "model.pt")
-if os.path.exists(prev_ckpt_path):
-    print(f"🔄 Run 4'teki olgun ağırlıklar yükleniyor: {prev_ckpt_path}")
-    ckpt = torch.load(prev_ckpt_path, map_location=device)
-    model.load_state_dict(ckpt["model_state_dict"], strict=True)
-    print("   ✓ 160M Token'lık güçlü Aşama 1 temeli başarıyla devralındı!")
-else:
-    print("⚠️ Checkpoint bulunamadı, sıfırdan başlanıyor.")
+# Rekortmen Run 11 (53.2P, 16.8 Sentaks, 11.8 Talimat)
+prev_ckpt_path = os.path.join(ROOT_DIR, "models", "dorina_44m_moe", "run11", "model.pt")
+
+print(f"🔄 Rekortmen Run 11 ağırlıkları yükleniyor: {prev_ckpt_path}")
+ckpt = torch.load(prev_ckpt_path, map_location=device)
+state = ckpt["model_state_dict"] if isinstance(ckpt, dict) and "model_state_dict" in ckpt else ckpt
+model.load_state_dict(state, strict=True)
+print("   ✓ 53.2 Puanlık Tarihi Rekortmen Run 11 temeli başarıyla devralındı!")
+
+
 
 total_params = sum(p.numel() for p in model.parameters())
 shared_params = sum(p.numel() for p in model.tok_emb.parameters()) + sum(p.numel() for p in model.ln_f.parameters())
@@ -184,29 +185,29 @@ def estimate_loss():
     return out
 
 # -----------------------------------------------------------------------------
-# 5. Model Çıktı Klasörü: Doğrudan models/dorina_44m_moe/run5/
+# 5. Model Çıktı Klasörü: Doğrudan models/dorina_44m_moe/run12/
 # -----------------------------------------------------------------------------
-RUN5_DIR = os.path.join(ROOT_DIR, "models", "dorina_44m_moe", "run5")
-os.makedirs(RUN5_DIR, exist_ok=True)
+RUN12_DIR = os.path.join(ROOT_DIR, "models", "dorina_44m_moe", "run12")
+os.makedirs(RUN12_DIR, exist_ok=True)
 
 logger = LabLogger(
     model_name="dorina_44m_moe",
-    run_tag="run5",
+    run_tag="run12",
     config={
         **CONFIG,
         "total_parameters": total_params,
         "active_parameters": shared_params,
-        "mode": "stage2_shard1_100m",
+        "mode": "stage2_shard8_150m_final",
         "precision": "fp16_mixed" if device == "cuda" else "fp32"
     },
     total_steps=CONFIG["max_iters"],
-    runs_dir=RUN5_DIR
+    runs_dir=RUN12_DIR
 )
 
 print("\n" + "=" * 70)
-print(f"🚀 DORINA-MoE SHARD 1 EĞİTİMİ BAŞLADI (Hedef: {CONFIG['max_iters']:,} Adım)")
+print(f"🚀 DORINA-MoE SHARD 8 (RUN 12 - 1 MİLYAR FİNALİ) BAŞLADI (Hedef: {CONFIG['max_iters']:,} Adım)")
 print(f"   • Hız: Turbo Mod (Batch 12, Adım Başına 6,144 Token)")
-print(f"   • Beklenen Süre: ~45 - 48 Dakika")
+print(f"   • Beklenen Süre: ~65 - 70 Dakika")
 print("=" * 70)
 
 best_val_loss = float('inf')
@@ -259,7 +260,7 @@ for iter_step in range(1, CONFIG["max_iters"] + 1):
             "step": iter_step,
             "val_loss": current_val,
             "config": CONFIG
-        }, os.path.join(RUN5_DIR, "model.pt"))
+        }, os.path.join(RUN12_DIR, "model.pt"))
 
         if current_val < best_val_loss:
             best_val_loss = current_val
@@ -268,7 +269,7 @@ for iter_step in range(1, CONFIG["max_iters"] + 1):
                 "step": iter_step,
                 "val_loss": current_val,
                 "config": CONFIG
-            }, os.path.join(RUN5_DIR, "best.pt"))
+            }, os.path.join(RUN12_DIR, "best.pt"))
 
         test_prompt = "def quick_sort(arr):\n"
         prompt_tokens = tokenizer.encode(test_prompt).ids
@@ -290,25 +291,25 @@ for iter_step in range(1, CONFIG["max_iters"] + 1):
         )
 
         # ---------------------------------------------------------------------
-        # HER ~20M TOKENDE BİR (%20) PERİYODİK BENCHMARK SINAVI (~3.200 Adım)
+        # HER ~18.4M TOKENDE BİR CANLI BENCHMARK SINAVI (3.000, 6.000, 9.000, 12.000, 15.000, 18.000, 21.000, 24.000)
         # ---------------------------------------------------------------------
-        if iter_step % 3200 == 0:
+        if iter_step % 3000 == 0:
             print("\n" + "=" * 75)
-            print(f"🎯 [CANLI ZEKA TESTİ] {iter_step:,}. Adım (~{(iter_step * CONFIG['micro_batch_size'] * CONFIG['context_length'])/1e6:.1f}M Token) 100 Puanlık Sınav Başlatılıyor...")
+            print(f"🎯 [CANLI ARA TEST] {iter_step:,}. Adım (~{(iter_step * CONFIG['micro_batch_size'] * CONFIG['context_length'])/1e6:.1f}M Token) 100 Puanlık Sınav Başlatılıyor...")
             print("=" * 75)
             from scripts.benchmark_suite import run_benchmark
-            snap_path = os.path.join(RUN5_DIR, f"model_step_{iter_step}.pt")
+            snap_path = os.path.join(RUN12_DIR, f"model_step_{iter_step}.pt")
             torch.save({
                 "model_state_dict": model.state_dict(),
                 "step": iter_step,
                 "val_loss": current_val,
                 "config": CONFIG
             }, snap_path)
-            bench_out = os.path.join(RUN5_DIR, f"benchmark_step_{iter_step}.json")
+            bench_out = os.path.join(RUN12_DIR, f"benchmark_step_{iter_step}.json")
             try:
                 rep = run_benchmark(snap_path, bench_out)
                 print(f"🏆 {iter_step:,}. Adım Sınav Skoru: {rep['total_score']} / 100 Puan")
-                print(f"   • Kod Mantığı: {rep['category_scores']['Code Logic']}/25 | Bilim: {rep['category_scores']['Science Knowledge']}/25")
+                print(f"   • Python Syntax: {rep['category_scores'].get('Python Syntax', 0)}/20 | Algoritmalar: {rep['category_scores'].get('Algorithms', 0)}/20 | Bilim: {rep['category_scores'].get('Science Knowledge', 0)}/20")
             except Exception as e:
                 print(f"⚠️ Periyodik sınav hatası: {e}")
             print("=" * 75 + "\n")
@@ -333,27 +334,29 @@ run_info = {
     "model_architecture": "Dorina-MoE (Sparse Mixture of Experts)",
     "total_parameters": 44452608,
     "active_parameters": 30296832,
-    "run_id": "run5",
-    "phase_name": "Aşama 2: Büyük Gövde - Shard 1 (İleri Algoritma & Matematik)",
-    "tokens_in_this_run": 98304000,
-    "cumulative_tokens": 258048000,
+    "run_id": "run12",
+    "phase_name": "Aşama 2: Büyük Gövde - Shard 8 (BÜYÜK 1 MİLYAR FİNALİ - Şok Tedavi: Donanım, Fen & Matematik)",
+    "tokens_in_this_run": 150528000,
+    "cumulative_tokens": 1000000000,
     "target_tokens": 1000000000,
     "steps_completed": CONFIG["max_iters"],
     "best_val_loss": best_val_loss,
-    "status": "SUCCESS"
+    "status": "SUCCESS - 1 BILLION TOKENS COMPLETED!"
 }
-with open(os.path.join(RUN5_DIR, "run_info.json"), "w", encoding="utf-8") as f:
+with open(os.path.join(RUN12_DIR, "run_info.json"), "w", encoding="utf-8") as f:
     json.dump(run_info, f, indent=2, ensure_ascii=False)
 
 print("\n" + "=" * 70)
-print(f"🎉 AŞAMA 2 - SHARD 1 EĞİTİMİ BAŞARIYLA TAMAMLANDI!")
+print(f"🎉 AŞAMA 2 - SHARD 8 (RUN 12) 1 MİLYAR TOKEN ZİRVESİ TAMAMLANDI!")
 print(f"   • En İyi Val Loss: {best_val_loss:.4f}")
 print("=" * 70)
 
 # Otomatik 100 Puanlık Benchmark Sınavı
-print("\n🏛️ EĞİTİM SONRASI 100 PUANLIK BENCHMARK SINAVI BAŞLATILIYOR...")
+print("\n🏛️ EĞİTİM SONRASI 100 PUANLIK BÜYÜK FİNAL BENCHMARK SINAVI BAŞLATILIYOR...")
 from scripts.benchmark_suite import run_benchmark
-model_saved_path = os.path.join(RUN5_DIR, "model.pt")
-benchmark_out = os.path.join(RUN5_DIR, "benchmark_score.json")
+model_saved_path = os.path.join(RUN12_DIR, "model.pt")
+benchmark_out = os.path.join(RUN12_DIR, "benchmark_score.json")
+
 if os.path.exists(model_saved_path):
     run_benchmark(model_saved_path, benchmark_out)
+
