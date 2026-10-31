@@ -435,3 +435,116 @@ Bir yapay zeka modelini kitaplardan okuyarak değil, doğrudan GPU üzerinde ya�
 
 
 
+
+
+---
+
+### 29. Altın Mühendislik Kuralı: "Sıcak Ağırlık" SFT Çöküşü ve Kristalleşme Zorunluluğu ❄️
+* **Tarih & Deney:** 26 Ekim 2026 - Dorina-V4 (145M) Shard 4 (2.0B Token) Erken SFT Pilotu.
+* **Gözlenen Hata:** Pre-training'in **Stable fazında (LR $5.5\times 10^{-4}$ - Sıcak)** iken doğrudan SFT'ye girildiğinde; model loss'u $10.85$'ten $0.0001$'e hızla indirmesine rağmen cevap üretirken sürekli `\n\n\n` ve `, , ,` bastı (Loss & Format Collapse).
+* **Temel Mühendislik Sebebi:**
+  1. Yüksek öğrenme hızındaki sıcak modelde ağırlıklar zayıf bağlı ve hareketlidir ($\Delta W$ yüksek). Modele ChatML formatı dayatıldığında, model gerçek soru-cevap mantığını öğrenmek yerine format boşluklarını ezberleyerek loss'u düşürme hilesine kaçar.
+  2. Base model yalın haliyle `def topla(a, b): return a + b` yazabilirken, sıcak ağırlıkla SFT'ye sokulduğunda afallamış ve yeteneğini kaybetmiştir.
+* **Katı Kural (SOP):** 
+  - 145M gibi küçük modellerde **WSD Cosine Decay uygulanmadan ($5.5\times 10^{-4} \to 1\times 10^{-5}$) asla SFT yapılmaz!**
+  - Model önce decay ile "kristalleşmeli" (enerji çukuruna oturmalı), ardından SFT dalına ayrılmalıdır.
+
+---
+
+### 30. Model Ölçekleme Atlası (10M -> 1B): Boyuta Göre Mimari Tercihleri ve Nedenleri 🗺️
+
+Farklı parametre sikletlerinde model tasarlarken yapılan en büyük hata "büyük model mimarisini küçültüp birebir uygulamak" veya "küçük modele MoE sıkıştırmaya çalışmaktır". Literatür ve Dorina-AI laboratuvar deneyimleriyle kanıtlanmış parametre atlası:
+
+| Ölçek | Hedef Kullanım | Mimari Türü | Katman / d_model / GQA | Token İhtiyacı | Kritik Tasarım Kuralı & Nedenleri |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **10M - 30M** | Tokenizer içi yönlendirici, Gramer düzeltici, Named-Entity (NER) | **Saf Dense** (GQA gereksiz, MHA veya 2:1) | 6-8 L / 256-384 d / Context: 512-1024 | 200M - 500M | **Kapasite Kısıtı:** Soyut mantık veya dünya bilgisi depolayamaz. Asla geniş çoklu-görev (multi-task) yüklenmemeli, tek bir spesifik göreve (sadece yazım denetimi veya sınıflandırma) kilitlenmelidir. |
+| **100M - 150M** *(Dorina-V4 145M)* | **En Optimal SLM:** Edge AI, Mobil Asistan, Hızlı Kod Tamamlama (Copilot), Fonksiyon Çağırıcı | **Dense Transformer + SwiGLU + GQA (3:1 veya 4:1)** | 14-16 L / 768 d / Context: 2048 | **Chinchilla:** 3B<br/>**Over-train:** 7B - 10B | **Neden Bu Siklet?:** VRAM tüketimi <4 GB'dir, telefon ve Raspberry Pi'de 60+ tok/s akar. GQA sayesinde KV cache neredeyse sıfır yer tutar. **MoE bu siklette ölümcüldür** (aktif parametreyi 30-40M'e düşürerek zekayı kuşa çevirir). Mutlaka Dense olmalıdır. |
+| **250M - 350M** | Zengin Türkçe/İngilizce çift dil, Temel Akıl Yürütme (Chain of Thought), Orta Düzey Kodlama | **Dense Transformer** (GQA 4:1) | 18-20 L / 1024 d / Context: 2048-4096 | 6B - 15B | **Denge Noktası:** 150M'e göre ezberlemeden daha fazla dünya olgusu tutabilir. Düşük kaynaklı sunucularda tek T4/V100 üzerinde sıfır gecikmeyle çalışır. |
+| **500M - 600M** | Çok adımlı problem çözme, Temel Ajanlık (Tool use), Derin Matematik | **Dense** veya **Hafif MoE (4 Uzman Top-1)** | 22-24 L / 1280-1536 d / Context: 4096 | 12B - 25B | **MoE'nin Başlangıç Eşiği:** MoE düşünülecekse mutlak asgari taban burasıdır. Ancak Dense tutulursa kararlılık ve çıkarım hızı (özellikle kuantize edildiğinde) MoE'ye göre çok daha üstündür. |
+| **1B - 1.5B** *(Gelecek Hedef: Dorina-V5)* | Tam Teşekküllü Bağımsız Zeka, Karmaşık Kod ve Çoklu Mantık, SmolLM2/LLaMA-3.2-1B Sikleti | **Dense** veya **8x Upcycled MoE** | 24-28 L / 2048 d / Context: 4096-8192 | 20B - 50B | **Mini-Dev:** 1B parametre, modern LLM yeteneklerinin (In-Context Learning, Zero-Shot Reasoning) tam anlamıyla "filizlendiği" alt sınırdır. 1:20-1:50 aralığında eğitildiğinde 7B'lik eski nesil modelleri alt eder. |
+
+#### Neden 145M Boyutu Asla Boşa Değildir? (V3 vs V4 Gerçeği)
+1. **Dorina-V3 (180M MoE) Neden Çuvallamıştı?:**
+   - V3 kağıt üzerinde 180M görünse de 32 uzmanlı MoE mimarisindeydi. Her tokende sadece 2 uzman seçtiği için **aktif parametresi yalnızca ~40M idi!** 
+   - 40M aktif beyinle modele hem matematik hem Türkçe hem kod öğretmeye çalışınca router çöktü, model sayı görünce formül ezberledi.
+2. **Dorina-V4 (145M Dense) Neden Bir Başarı Hikayesidir?:**
+   - V4 **saf Dense'tir.** Yani her tokende **144.7 Milyon parametrenin tamamı aynı anda ateşlenir.** 
+   - V3'ün fiili beyin gücünün **3.5 katıdır.**
+   - Dünya literatüründe HuggingFace'in en çok indirilen modellerinden biri **SmolLM-135M**'dir. 135M-150M bandı; donanımı yormayan, telefonlarda, klavyelerde ve uç cihazlarda sıfır gecikmeyle çalışan dünyanın en popüler SLM (Küçük Dil Modeli) standardıdır. 
+   - Dolayısıyla şu an yaptığımız eğitim kesinlikle boşa değildir; tam tersine hem bağımsız bir ürün hem de ilerideki 500M/1B modellerin temel mühendislik çekirdeğidir.
+
+---
+
+### 31. Over-Training Paradigması ve Endüstri Başarıları (Chinchilla'nın Ötesi) 🚀
+
+Geleneksel makine öğrenmesinde *"aynı veriyi çok okutmak ezberletir (over-fitting)"* tabusu varken; modern LLM/SLM çağında **"milyarlarca FARKLI ve kaliteli token ile aşırı eğitmek (over-training)"** küçük modelleri devleştiren ana silahtır.
+
+#### 1. Endüstrideki Efsanevi Over-Training Örnekleri:
+1. **Meta LLaMA-3 (8B):**
+   - Chinchilla optimal kuralına göre 8B bir modelin 160 Milyar token görmesi gerekirdi ($1:20$).
+   - Meta modele tam **15 Trilyon Token ($1:1875$ oranı!)** bastı.
+   - Sonuç: 8B boyutunda olmasına rağmen eski nesil 70B modelleri (LLaMA-1 70B) MMLU ve kodlama testlerinde ezip geçti.
+2. **HuggingFace SmolLM-135M:**
+   - 135 Milyon parametrelik bu minik mimariye tam **600 Milyar Token ($1:4400$ oranı!)** verildi.
+   - Sonuç: Telefon ve tarayıcıda 80 MB yer kaplayan bu model; tek adımlı fonksiyon çağırmada (tool calling) %92-97 başarıya ulaştı ve akıcı İngilizce diyalog kurabildi.
+3. **Meta MobileLLM (125M - 350M):**
+   - Akıllı telefonlarda doğrudan çalışması için tasarlanan 125M mimarisi derin-ince (deep-thin) yapıyla trilyonlarca tokene maruz bırakıldı ve uç cihazlarda yerel ajanlık (on-device agent) yapabildiği kanıtlandı.
+
+#### 2. Küçük Parametrelerde (145M) Over-Training İşe Yarar mı?
+**Evet, parametre sayısı ne kadar küçükse over-training'in kazancı o kadar dramatik olur!**
+- Büyük modeller (70B) zaten devasa kapasiteye sahiptir, doymaları zordur.
+- Küçük modeller (145M) ise az parametreye sahip oldukları için **aynı kavramı yüzbinlerce farklı cümle varyasyonuyla gördükçe ağırlık uzayını aşırı optimize eder**. Dilin grameri, fonksiyon çağırma şablonları ve mantık akışları modelin nöronlarına "refleks" olarak mühürlenir.
+- **Kapasite Limiti Nedir?:** 145M bir model bir Wikipedia veya ansiklopedi olamaz (milyonlarca tarihi olguyu ezberleyemez). Ama **mükemmel bir mantık, dil akıcılığı, kod sentaksı ve router motoru** olur!
+
+#### 3. Trilyonluk Veriler Nereden ve Nasıl Bulunur? (Data Pipeline)
+İngilizce dünyasında veri kıtlığı yoktur; açık kaynak havuzlar tamamen ücretsizdir:
+- **FineWeb-Edu (HuggingFaceFW):** 1.3 Trilyon tokenlık en kaliteli eğitim verisi (Llama-3 sınıflandırıcısıyla filtrelenmiş).
+- **Cosmopedia v2:** Sentetik ama ders kitabı kalitesinde 30 Milyar tokenlık akademik dünya bilgisi.
+- **The Stack v2 & Python-Edu:** Yüz milyarlarca tokenlık tertemiz kod ve algoritma arşivi.
+- **FineMath:** 40 Milyar tokenlık saf matematik, mantık ve muhakeme veri seti.
+*Bu veri setleri HuggingFace üzerinden streaming veya parquet chunk'ları ile tek satır Python koduyla çekilir.*
+
+---
+
+### 32. Küçük Model Stratejisi: "Her Şeyi Bilen Dev" Değil, "Spesifik Konuda Usta Ajan" (SLM Specialist Architecture) 🎯
+
+Bağımsız bir yapay zeka laboratuvarı (Dorina-AI) için 1B - 70B modeller eğitmek fahiş elektrik maliyeti, haftalar süren eğitimler ve devasa sunucu masrafları demektir. Buna karşılık **100M - 150M sikleti**, modern yapay zekanın en çevik ve en kârlı alanıdır.
+
+#### 1. "Her Şeyi Bilen Model" Yanılgısı
+Dünyadaki tüm tarihi, felsefeyi ve magazinel bilgiyi 150M'e sığdırmaya çalışmak fiziksel kapasite tavanına çarpar. Ancak günümüzün en iyi sistemleri (OpenAI Swarm, Perplexity, Cursor) tek bir dev yerine **uzman küçük ajanlar zincirini** kullanır:
+- **Arama & Araştırma:** Model tarihi ezberlemez; `search_web()` aracıyla güncel kaynaktan çeker.
+- **Matematik & Hesap:** Kafadan 5 basamaklı sayı çarpmaz; `run_python()` çağırarak cevabı milisaniyede alır.
+- **Sistem & Dosya Yönetimi:** Bilgisayarda dosya taşıma, git commit atma ve terminal yönetimi gibi görevleri sıfır gecikmeyle yürütür.
+
+#### 2. Dorina Uzman SLM Filosu (Örnek Yol Haritası):
+Tek bir dev yerine, aynı 145M tabanından türetilen uzman kardeş modeller:
+1. **Dorina-Router / Agent (145M):** Kullanıcının niyetini anlayan, web araması veya araç (tool) tetikleyen ultra-hızlı orkestra şefi.
+2. **Dorina-Coder (145M):** Sadece Python, Bash, JSON ve regex sözdizimine doymuş, IDE içi otonom kod tamamlayıcı.
+3. **Dorina-Turkish (145M):** Mükemmel gramer düzeltici, resmi dile çevirici ve yerel Türkçe metin asistanı.
+
+#### 3. Mühendislik ve Maliyet Avantajı:
+- **Sıfır Sunucu Maliyeti:** Kullanıcının kendi bilgisayarında, telefonunda veya tarayıcısında (WebGPU) CPU ile 60+ token/saniye çalışır.
+- **Eğitim Hızı:** 145M bir modeli Kaggle'da bedavaya veya evdeki tek bir RTX GPU ile 1-2 günde sıfırdan eğitebilir ve deneyleri ışık hızında yineleyebilirsin.
+
+---
+
+### 33. Dorina-V5 Vizyonu: "Tekil Dev Model" Değil, "Dorina Suite (Uzman SLM Paketi)" 📦✨
+
+Endüstride acemi yaklaşım "her nesilde parametreyi körü körüne 5 katına çıkarmak" iken; elit mühendislik yaklaşımı (Meta'nın LLaMA-1 70B'den LLaMA-3 8B'ye geçerek boyutu küçültüp zekayı ve veriyi katlaması gibi) **tersine ölçeklemedir (Downsizing with Extreme Quality).**
+
+Dorina-V5, tek bir hantal model yerine **birlikte ahenkle çalışan 145M'lik bir uzman paketi (Dorina Suite)** olarak tasarlanacaktır:
+
+1. **Ortak Süper Çekirdek (Base Foundation):**
+   - 145M Dense mimarisinde, kaliteli İngilizce + Kod + Matematik ile yüksek token yoğunluğunda eğitilmiş tek bir ana beyin.
+2. **Paket İçindeki Uzmanlar (The Specialized Suite):**
+   - **`Dorina-V5-Agent`:** Web araması (Google/DuckDuckGo), takvim/dosya okuma ve JSON fonksiyon yönlendirici.
+   - **`Dorina-V5-Coder`:** Terminal komutları, Bash, Python scriptleri ve otomatik kod tamamlama.
+   - **`Dorina-V5-Linguist`:** Türkçe/İngilizce çift dilli metin üretimi, gramer tashih ve özetleme.
+3. **Kullanıcı Deneyimi (Edge Superiority):**
+   - Kullanıcı bilgisayarına 10 GB'lık dev bir model indirmek yerine, toplamı **~300 MB** eden bu hafif takımı indirir.
+   - Sistem bir görev geldiğinde anında ilgili uzmanı 1 milisaniyede RAM'e alır, işini yaptırır ve kapatır.
+   - **Sonuç:** Sıfır elektrik faturası, sıfır sunucu maliyeti, sıfır gecikme ve dünya standartlarında modüler yapay zeka!
+
+
+
+

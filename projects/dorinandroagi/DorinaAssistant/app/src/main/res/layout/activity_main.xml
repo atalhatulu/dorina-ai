@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="✨ Dorina AI Assistant"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🟢 Dorina-V4 Aktif"
+            android:textColor="#4CAF50"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Chat Messages View -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <TextView
+            android:id="@+id/tvChatLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#E0E0E0"
+            android:textSize="15sp"
+            android:text="Dorina: Merhaba Talha! Dorina-V4 Android cihazında hazır.\nSana nasıl yardımcı olabilirim?\n\nSesli veya yazılı komut verebilirsin:\n• Parlaklığı %100 yap / kıs\n• TikTok veya YouTube aç\n• Yarın sabah 8'e alarm kur\n• Şarjım kaç kaldı?\n• Feneri aç / kapat\n---------------------------------------\n\n" />
+    </ScrollView>
+
+    <!-- Bottom Input Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="8dp">
+
+        <ImageButton
+            android:id="@+id/btnMic"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="6dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_btn_speak_now"
+            android:contentDescription="Sesli Konuş" />
+
+        <EditText
+            android:id="@+id/etCommand"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="#1E1E1E"
+            android:hint="Yaz veya mikrofona bas..."
+            android:textColor="#FFFFFF"
+            android:textColorHint="#757575"
+            android:padding="12dp"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:backgroundTint="#6200EE"
+            android:text="Gönder"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+</LinearLayout>

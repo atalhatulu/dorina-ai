@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorina Data Purifier - Canlı Kontrol Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0d14;
+            --card-bg: rgba(18, 24, 38, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-green: #00f5a0;
+            --accent-gold: #f6d365;
+            --accent-purple: #b070ff;
+            --accent-orange: #ff9f43;
+            --accent-red: #ff5e62;
+            --text-main: #f0f4f8;
+            --text-muted: #8b9bb4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(79, 172, 254, 0.05) 0%, transparent 40%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            background: rgba(10, 13, 20, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #000;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .container {
+            max-width: 1540px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Sidebar & Controls */
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(16px);
+        }
+
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        select, input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select optgroup {
+            background: #141b2d;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        select option {
+            background: #0d121f;
+            color: #fff;
+            font-weight: 400;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 0.85rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #050b14;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(255, 94, 98, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 94, 98, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 94, 98, 0.3);
+        }
+
+        /* Stats Hero 4-card Row (Toplam, Taranan, Geçerli/Altın, Elenen) */
+        .stats-hero-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-hero {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 1.15rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .stat-card-hero.blue::after { background: linear-gradient(90deg, var(--accent-cyan), transparent); }
+        .stat-card-hero.purple::after { background: linear-gradient(90deg, var(--accent-purple), transparent); }
+        .stat-card-hero.green::after { background: linear-gradient(90deg, var(--accent-green), transparent); }
+        .stat-card-hero.red::after { background: linear-gradient(90deg, var(--accent-red), transparent); }
+
+        .stat-label {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-top: 0.3rem;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .stat-subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Stats Secondary Row */
+        .stats-secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card-sm {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+        }
+
+        .stat-card-sm .stat-value {
+            font-size: 1.25rem;
+        }
+
+        /* Pipeline Steps Visualizer */
+        .steps-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .step-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 2;
+        }
+
+        .step-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .step-node.active .step-icon {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.15);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            transform: scale(1.1);
+        }
+
+        .step-node.completed .step-icon {
+            border-color: var(--accent-green);
+            background: rgba(0, 245, 160, 0.15);
+            color: var(--accent-green);
+        }
+
+        .step-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        .step-node.active .step-name {
+            color: var(--accent-cyan);
+        }
+
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--card-border);
+            margin: 0 10px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .step-connector.filled {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+        }
+
+        /* Live Content Card */
+        .live-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .live-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 1rem;
+        }
+
+        .live-url {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .live-badge-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .metric-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        .metric-badge span {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .live-content-preview {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 260px;
+            overflow-y: auto;
+            color: #d1d9e6;
+            white-space: pre-wrap;
+            font-family: inherit;
+        }
+
+        /* Activity Log Console */
+        .log-console {
+            background: #06080d;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            height: 170px;
+            overflow-y: auto;
+            color: #8b9bb4;
+        }
+
+        .log-line {
+            margin-bottom: 4px;
+        }
+        .log-line.info { color: #8b9bb4; }
+        .log-line.success { color: var(--accent-green); }
+        .log-line.warn { color: var(--accent-gold); }
+        .log-line.error { color: var(--accent-red); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="brand-badge">PURIFIER CORE</span>
+            <h1>Dorina Data Purifier 🧹✨</h1>
+        </div>
+        <div class="status-pill">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">DURDURULDU</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sol Kontrol Paneli -->
+        <aside class="panel">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1.25rem;">Kaynak ve Kazıma Ayarları</h2>
+            
+            <div class="control-group">
+                <label>Seçkin Türkçe Kaynak Kataloğu</label>
+                <select id="sourceSelect">
+                    <optgroup label="🔬 Popüler Bilim & Akademi">
+                        <option value="evrim_agaci_contents" selected>Evrim Ağacı (Bilim & Evrim)</option>
+                        <option value="bilimgenc">TÜBİTAK Bilim Genç (6.300+)</option>
+                        <option value="sarkac">Sarkaç (Bilim Akademisi - Güncel)</option>
+                        <option value="bilimfili">Bilimfili (Doğa & Tıp Bilimleri)</option>
+                    </optgroup>
+                    <optgroup label="🏺 Tarih, Arkeoloji & Kültür">
+                        <option value="arkeofili">Arkeofili (Arkeoloji & Antropoloji)</option>
+                        <option value="aktuel_arkeoloji">Aktüel Arkeoloji Dergisi</option>
+                    </optgroup>
+                    <optgroup label="🏛️ Felsefe, Mantık & Sosyal Bilimler">
+                        <option value="oncul_felsefe">Öncül Analitik Felsefe Topluluğu</option>
+                        <option value="k2_felsefe">K2 Felsefe Dergisi</option>
+                    </optgroup>
+                    <optgroup label="💻 Teknoloji & Mühendislik">
+                        <option value="webrazzi">Webrazzi (Girişimcilik & Teknoloji)</option>
+                    </optgroup>
+                    <optgroup label="🌐 Manuel Giriş">
+                        <option value="custom">Özel Sitemap / URL...</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group" id="customUrlGroup" style="display: none;">
+                <label>Özel Sitemap URL</label>
+                <input type="text" id="customUrl" placeholder="https://ornek.com/sitemap.xml">
+            </div>
+
+            <div class="control-group">
+                <label>Makale Limiti (0 = Kalan Tümünü Topla)</label>
+                <input type="number" id="limitInput" value="50" min="0" max="100000">
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-primary" id="btnStart" onclick="startScraping()">
+                    ▶️ Başlat
+                </button>
+                <button class="btn-danger" id="btnStop" onclick="stopScraping()" disabled>
+                    ⏹️ Durdur
+                </button>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 1.5rem 0;">
+
+            <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                <p><strong>🧠 Tokenizer:</strong> Dorina 32K BPE (~1.35x)</p>
+                <p style="margin-top: 4px;"><strong>📁 Altın Havuz:</strong> <code>output/sources/*.jsonl</code></p>
+                <p style="margin-top: 4px;"><strong>🗑️ Elenenler Logu:</strong> <code>output/rejected_urls.jsonl</code></p>
+            </div>
+        </aside>
+
+        <!-- Sağ Ana İçerik & İstatistikler -->
+        <main>
+            <!-- 1. Satır: 4'lü Ana Metrik Paneli (Sitedeki Toplam, Taranan, Geçerli Altın, Elenen Çöp) -->
+            <div class="stats-hero-row">
+                <div class="stat-card-hero blue">
+                    <div class="stat-label">Sitedeki Toplam</div>
+                    <div class="stat-value" id="statSiteTotal" style="color: var(--accent-blue);">-</div>
+                    <div class="stat-subtext">Sitemap'teki makaleler</div>
+                </div>
+                <div class="stat-card-hero purple">
+                    <div class="stat-label">Toplam Taranan</div>
+                    <div class="stat-value" id="statScanned" style="color: var(--accent-purple);">0</div>
+                    <div class="stat-subtext">İncelenen sayfa</div>
+                </div>
+                <div class="stat-card-hero green">
+                    <div class="stat-label">Geçerli (Altın)</div>
+                    <div class="stat-value" id="statArticles" style="color: var(--accent-green);">0</div>
+                    <div class="stat-subtext">Havuza kabul edilen</div>
+                </div>
+                <div class="stat-card-hero red">
+                    <div class="stat-label">Elenen (Çöp/Kısa)</div>
+                    <div class="stat-value" id="statRejected" style="color: var(--accent-red);">0</div>
+                    <div class="stat-subtext">Kriter dışı kalan</div>
+                </div>
+            </div>
+
+            <!-- 2. Satır: Detay Sayaçları -->
+            <div class="stats-secondary-grid">
+                <div class="stat-card-sm">
+                    <div class="stat-label">Tahmini Token</div>
+                    <div class="stat-value" id="statTokens" style="color: var(--accent-cyan);">0</div>
+                </div>
+                <div class="stat-card-sm">
+                    <div class="stat-label">Disk Boyutu</div>
+                    <div class="stat-value" id="statDisk" style="color: #fff;">0 MB</div>
+                </div>
+                <div class="stat-card-sm">
+                    <div class="stat-label">Toplam Kelime</div>
+                    <div class="stat-value" id="statWords" style="color: var(--accent-gold);">0</div>
+                </div>
+                <div class="stat-card-sm">
+                    <div class="stat-label">Kalan Toplanabilir</div>
+                    <div class="stat-value" id="statRemaining" style="color: var(--accent-orange);">-</div>
+                </div>
+            </div>
+
+            <!-- Aşama İzleyici -->
+            <div class="steps-container">
+                <div class="step-node" id="step1">
+                    <div class="step-icon">🗺️</div>
+                    <div class="step-name">SITEMAP HARVEST</div>
+                </div>
+                <div class="step-connector" id="conn1"></div>
+
+                <div class="step-node" id="step2">
+                    <div class="step-icon">🥷</div>
+                    <div class="step-name">STEALTH FETCH</div>
+                </div>
+                <div class="step-connector" id="conn2"></div>
+
+                <div class="step-node" id="step3">
+                    <div class="step-icon">🧹</div>
+                    <div class="step-name">BOILERPLATE CLEAN</div>
+                </div>
+                <div class="step-connector" id="conn3"></div>
+
+                <div class="step-node" id="step4">
+                    <div class="step-icon">⚖️</div>
+                    <div class="step-name">QUALITY SCORING</div>
+                </div>
+                <div class="step-connector" id="conn4"></div>
+
+                <div class="step-node" id="step5">
+                    <div class="step-icon">🏆</div>
+                    <div class="step-name">GOLD CORPUS</div>
+                </div>
+            </div>
+
+            <!-- Anlık Kazınan İçerik Kartı -->
+            <div class="live-card">
+                <div class="live-card-header">
+                    <div>
+                        <h3 id="liveTitle" style="font-size: 1.15rem; margin-bottom: 4px;">Henüz bir makale kazınmadı...</h3>
+                        <a href="#" target="_blank" class="live-url" id="liveUrl">Beklemede...</a>
+                    </div>
+                    <div class="live-badge-row">
+                        <div class="metric-badge">Kelime: <span id="liveWords">0</span></div>
+                        <div class="metric-badge">Tahmini Token: <span id="liveTokens" style="color: var(--accent-purple);">0</span></div>
+                        <div class="metric-badge">Cümle: <span id="liveSentences">0</span></div>
+                        <div class="metric-badge">Paragraf: <span id="liveParas">0</span></div>
+                        <div class="metric-badge">Harf: <span id="liveChars">0</span></div>
+                    </div>
+                </div>
+
+                <div class="live-content-preview" id="liveContent">
+                    Kazıma başlatıldığında temizlenmiş metin anlık olarak burada akacak...
+                </div>
+            </div>
+
+            <!-- Terminal / Canlı Log -->
+            <div style="margin-top: 1.5rem;">
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">CANLI OPERASYON GÜNLÜĞÜ</div>
+                <div class="log-console" id="logConsole">
+                    <div class="log-line info">[SİSTEM] Dorina Data Purifier Studio hazırlandı. Bağlantı bekleniyor...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let ws = null;
+        let isRunning = false;
+
+        document.getElementById("sourceSelect").addEventListener("change", function(e) {
+            const customGroup = document.getElementById("customUrlGroup");
+            customGroup.style.display = e.target.value === "custom" ? "block" : "none";
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: "inspect_source", source: e.target.value }));
+            }
+        });
+
+        function formatTokenCount(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(2) + "B";
+            if (num >= 1000000) return (num / 1000000).toFixed(2) + "M";
+            if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+            return num.toLocaleString();
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                logMessage("WebSocket bağlantısı sağlandı.", "success");
+                const source = document.getElementById("sourceSelect").value;
+                ws.send(JSON.stringify({ action: "inspect_source", source: source }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleEvent(data);
+            };
+
+            ws.onclose = () => {
+                logMessage("WebSocket koptu, yeniden bağlanılıyor...", "warn");
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function handleEvent(data) {
+            if (data.type === "stats_update") {
+                document.getElementById("statArticles").textContent = data.total_articles.toLocaleString();
+                document.getElementById("statScanned").textContent = (data.total_scanned || 0).toLocaleString();
+                document.getElementById("statRejected").textContent = (data.total_rejected || 0).toLocaleString();
+                document.getElementById("statTokens").textContent = formatTokenCount(data.total_tokens || Math.round(data.total_words * 1.35));
+                document.getElementById("statDisk").textContent = (data.disk_mb || 0).toFixed(2) + " MB";
+                document.getElementById("statWords").textContent = data.total_words.toLocaleString();
+                
+                if (data.site_total !== undefined && data.site_total !== null && data.site_total > 0) {
+                    document.getElementById("statSiteTotal").textContent = data.site_total.toLocaleString();
+                    document.getElementById("statRemaining").textContent = (data.remaining || 0).toLocaleString();
+                } else {
+                    document.getElementById("statSiteTotal").textContent = "-";
+                    document.getElementById("statRemaining").textContent = "-";
+                }
+            }
+            else if (data.type === "step") {
+                updateStepVisuals(data.step_index);
+                logMessage(data.message, data.level || "info");
+            }
+            else if (data.type === "doc_accepted") {
+                updateStepVisuals(5);
+                document.getElementById("liveTitle").textContent = data.title || "İsimsiz Makale";
+                document.getElementById("liveUrl").textContent = data.url;
+                document.getElementById("liveUrl").href = data.url;
+                document.getElementById("liveWords").textContent = data.word_count.toLocaleString();
+                document.getElementById("liveTokens").textContent = formatTokenCount(Math.round(data.word_count * 1.35));
+                document.getElementById("liveSentences").textContent = data.sentence_count.toLocaleString();
+                document.getElementById("liveParas").textContent = data.paragraph_count.toLocaleString();
+                document.getElementById("liveChars").textContent = data.char_count.toLocaleString();
+                document.getElementById("liveContent").textContent = data.text;
+                logMessage(`[ALTIN VERİ] ${data.title} (${data.word_count} kelime)`, "success");
+            }
+            else if (data.type === "doc_rejected") {
+                logMessage(`[ELENDİ] ${data.url} -> ${data.reason}`, "warn");
+            }
+            else if (data.type === "status") {
+                isRunning = data.running;
+                const dot = document.getElementById("statusDot");
+                const txt = document.getElementById("statusText");
+                const btnStart = document.getElementById("btnStart");
+                const btnStop = document.getElementById("btnStop");
+
+                if (isRunning) {
+                    dot.className = "status-dot active";
+                    txt.textContent = "KAZINIYOR...";
+                    btnStart.disabled = true;
+                    btnStop.disabled = false;
+                } else {
+                    dot.className = "status-dot";
+                    txt.textContent = "DURDURULDU";
+                    btnStart.disabled = false;
+                    btnStop.disabled = true;
+                    resetStepVisuals();
+                }
+            }
+        }
+
+        function updateStepVisuals(currentStep) {
+            for (let i = 1; i <= 5; i++) {
+                const node = document.getElementById(`step${i}`);
+                const conn = document.getElementById(`conn${i}`);
+                if (i < currentStep) {
+                    node.className = "step-node completed";
+                    if (conn) conn.className = "step-connector filled";
+                } else if (i === currentStep) {
+                    node.className = "step-node active";
+                    if (conn) conn.className = "step-connector";
+                } else {
+                    node.className = "step-node";
+                    if (conn) conn.className = "step-connector";
+                }
+            }
+        }
+
+        function resetStepVisuals() {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`step${i}`).className = "step-node";
+                const conn = document.getElementById(`conn${i}`);
+                if (conn) conn.className = "step-connector";
+            }
+        }
+
+        function logMessage(msg, level="info") {
+            const consoleEl = document.getElementById("logConsole");
+            const div = document.createElement("div");
+            div.className = `log-line ${level}`;
+            const time = new Date().toLocaleTimeString();
+            div.textContent = `[${time}] ${msg}`;
+            consoleEl.appendChild(div);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function startScraping() {
+            const source = document.getElementById("sourceSelect").value;
+            const customUrl = document.getElementById("customUrl").value;
+            let limit = parseInt(document.getElementById("limitInput").value);
+            if (isNaN(limit)) limit = 50;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: "start",
+                    source: source,
+                    custom_url: customUrl,
+                    limit: limit
+                }));
+            }
+        }
+
+        function stopScraping() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: "stop" }));
+            }
+        }
+
+        window.onload = connectWebSocket;
+    </script>
+</body>
+</html>

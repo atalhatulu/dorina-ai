@@ -1,48 +1,72 @@
-# Python onbellek ve derleme dosyalari
+# ==============================================================================
+# Dorina-AI Git Ignore
+# ==============================================================================
+
+# Python önbellek ve derleme dosyaları
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 
-# Sanal ortam klasorleri
+# Sanal ortam klasörleri
 .venv/
 venv/
 ENV/
+env/
 
-# Model agirliklari ve buyuk binary dosyalar (GitHub 100MB sinirini asmamak icin)
+# Model ağırlıkları ve büyük binary dosyalar (GitHub 100MB sınırını aşmamak için)
 *.pt
 *.pth
 *.ckpt
 *.bin
-*.wav
-*.mp3
-*.log
+*.gguf
+*.onnx
 checkpoints/
 models/
+models_v4/
 archive/
 
-# Veri setleri ve Binary Cache
+# Veri setleri, sesler ve binary cache
 data/
 dataset/
 *.jsonl
+*.wav
+*.mp3
+*.log
 
-# Kaggle gecici yukleme ve dataset klasorleri
+# Kaggle dataset paketleri & büyük geçici artifact'lar
 kaggle_v4_dataset_upload/
-kaggle_v4_shard2_dataset/
-kaggle_v4_shard3_dataset/
+kaggle_v4_*_dataset/
+test_artifacts/
 
-# Ses ve ara test ciktilari
-voice/models/
-voice/checkpoints/
+# Ses ve ara test çıktıları
+voice/
+projects/dorina_voice_tts/samples/
+projects/dorina_voice_tts/test_audio/
+projects/dorina_voice_tts/dataset/
+projects/dorina_voice_tts/dataset_clean/
+projects/dorina_voice_tts/dataset_pool/
+projects/dorina_voice_tts/vocoder_ckpt/
 
-# Dinamik Laboratuvar Kosulari
+# Data Purifier dinamik çıktıları
+projects/dorina_data_purifier/output/
+output/
+
+# Android build, gradle & yerel konfigürasyonlar
+.gradle/
+build/
+local.properties
+*.apk
+projects/dorinandroagi/DorinaAssistant/.gradle/
+projects/dorinandroagi/DorinaAssistant/build/
+projects/dorinandroagi/DorinaAssistant/local.properties
+projects/dorinandroagi/DorinaAssistant/app/build/
+
+# Dinamik Laboratuvar Koşuları
 runs/
 
-# Releases
-releases/**/model.pt
-
-# IDE ve Isletim Sistemi dosyalari
+# IDE ve İşletim Sistemi dosyaları
 .vscode/
 .idea/
 .DS_Store

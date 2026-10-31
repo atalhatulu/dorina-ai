@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.DorinaAssistant" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#6200EE</item>
+        <item name="android:statusBarColor">#121212</item>
+        <item name="android:windowBackground">#121212</item>
+    </style>
+</resources>

@@ -1,102 +1,100 @@
-# Dorina AI
+# Dorina AI 🏛️
 
-PyTorch kullanılarak sıfırdan (*from scratch*) geliştirilen, özgün Transformer tabanlı bir Büyük Dil Modeli (LLM) araştırma ve geliştirme projesidir. Hazır ağırlıklar ya da harici yüksek seviye kütüphaneler (HuggingFace Transformers vb.) kullanılmadan; tokenizasyon, çok kafalı dikkat (Multi-Head Self-Attention), artık bağlantılar (Residual Connections) ve katman normalizasyonu doğrudan tensör matematiğiyle inşa edilmiştir.
+**Dorina AI**, sıfırdan (*from scratch*) saf PyTorch tensör mimarisiyle inşa edilmiş bağımsız bir Yapay Zeka ekosistemi ve Büyük Dil Modeli (LLM / SLM) araştırma-geliştirme projesidir.
 
----
-
-## 🎯 Proje Vizyonu ve Yol Haritası
-
-Temel amaç, model mimarisini küçük ölçekten başlayarak kademeli olarak büyütmek ve 1 Milyar (1B) parametre hedefine ulaştırmaktır.
-
-* **Aşama 1 (Tamamlandı):** 240K prototipten 70M ve 278M ölçeğine geçiş. Cosmopedia v2 üzerinde sentetik akıl yürütme ve dil kurgusu eğitimi tamamlandı.
-* **Aşama 2 (Aktif - Gece Eğitimi):** FineWeb-Edu + Cosmopedia Data-Mix (%65 / %35) ile genel dünya bilgisi ve akademik dil yetenekleri kazandırma.
-* **Aşama 3 (Planlanan):** Kod & Mantık (Python / Reasoning) continual pre-training.
-* **Aşama 4 (Gelecek Vizyonu):** Özgün Rust tabanlı Byte-Level BPE Tokenizer, RoPE, SwiGLU mimarisi ve 1B parametreli Dorina 2.0.
+Harici veya soyutlayıcı yüksek seviye kütüphaneler (HuggingFace Transformers vb.) kullanılmadan; Grouped-Query Attention (GQA), Rotary Position Embeddings (RoPE), SwiGLU aktivasyonu, RMSNorm, ChatML şablonlama ve BPE tokenizasyon mekanizmaları doğrudan sıfırdan yazılmıştır.
 
 ---
 
-## 📊 Model Sürüm ve Karşılaştırma Matrisi
+## 🏛️ Proje Mimarisi ve Ekosistem
 
-| Sürüm | Model Dosyası | Tokenizer | Katman (`n_layer`) | Boyut (`n_embd`) | Kafa (`n_head`) | Bağlam (`ctx`) | Parametre | Durum / Başarı |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **v0.10** | `dorina_v0.10_240k.pt` | Karakter (~295) | 4 | 64 | 4 | 64 | ~240K | Arşivlendi |
-| **v0.11** | `dorina_v0.11_4m.pt` | GPT-2 BPE (50.257) | 4 | 128 | 4 | 128 | ~4.0M | Arşivlendi |
-| **v0.12** | `dorina_v0.12_32m.pt` | GPT-2 BPE (50.257) | 8 | 256 | 8 | 256 | ~32.1M | Arşivlendi |
-| **v0.13** | `dorina_v0.13_70m/model.pt` | GPT-2 BPE (50.257) | 10 | 512 | 8 | 512 | ~70.0M | Val Loss: 3.12 (Releases'ta) |
-| **v0.13-SFT**| `dorina_v0.13_70m_sft/model.pt` | GPT-2 BPE (50.257) | 10 | 512 | 8 | 512 | ~70.0M | SFT Talimat Modeli |
-| **v0.14 (P1)** | `dorina_v0.14_278m/model.pt` | GPT-2 BPE (50.257) | 16 | 1024 | 16 | 1024 | **278,293,504** | **Val Loss: 4.6830 (Donduruldu)** |
-| **v0.14 (P2)** | `runs/dorina_v0.14_278m/run2/` | GPT-2 BPE (50.257) | 16 | 1024 | 16 | 1024 | **278,293,504** | **Aktif Gece Eğitimi (Data-Mix)** |
+Dorina AI bünyesinde 5 ana odak alanı bulunmaktadır:
+
+1. **Dorina-V4 (`projects/dorina_v4/` & `models/dorina_v4/`):** 144.7M Dense Transformer amiral gemisi temel ve SFT dil modelleri (3.0B token müfredatı, Dual T4 Kaggle DDP).
+2. **Dorinandro AGI (`projects/dorinandroagi/`):** Samsung Galaxy A70 ve Android cihazlar için saf yerel Cihaz İçi İşletim Sistemi Ajanı (GGUF f16 / PyTorch, HTTP/Bridge, tam Android APK kaynak kodu).
+3. **Dorina Nano Keyboard (`projects/dorina_nano_keyboard/`):** Akıllı klavye tamamlama, imla ve soru eki (`-mi`) ayıran hafif uç cihaz dil motoru.
+4. **Dorina Voice & TTS (`projects/dorina_voice_tts/`):** FastPitch ve HiFi-GAN tabanlı uçtan uca Türkçe vokal sentezleme motoru.
+5. **Dorina Data Purifier (`projects/dorina_data_purifier/`):** Web kazıma, Nano temizleyici ve LLM kalite filtreli altın veri üretim fabrikası.
 
 ---
 
-## 🏗️ Dizin Mimarisi
+## 🧠 Model Ailesi ve Envanteri
 
-```text
-dorina-ai/
-├── data/                               # Ham ve binary (.bin) tokenize edilmiş veri setleri
-│   ├── dorina300m_phase1_train.bin     # Cosmopedia v2 eğitim seti (429.2 MB)
-│   ├── dorina278m_phase2_train.bin     # FineWeb-Edu eğitim seti (85.8 MB)
-│   └── TinyStoriesV2-GPT4-train.txt    # Erken modeller için 2.1 GB masal seti
-│
-├── releases/                           # Başarıyla tamamlanmış dondurulmuş sürümler
-│   ├── dorina_v0.13_70m/               # 70M Temel Model
-│   ├── dorina_v0.13_70m_sft/           # 70M SFT Sohbet/Talimat Modeli
-│   └── dorina_v0.14_278m/              # 278M Aşama 1 Modeli (Cosmopedia v2)
-│
-├── runs/                               # Aktif eğitim ve kontrol noktaları (checkpoints)
-│   └── dorina_v0.14_278m/run2/         # Aşama 2 (FineWeb-Edu + Cosmopedia Data-Mix)
-│
-├── scripts/                            # Veri hazırlama, değerlendirme ve izleme betikleri
-│   ├── prepare_278m_phase2.py          # FineWeb-Edu veri seti çekici ve BPE dönüştürücü
-│   ├── prepare_300m_phase1.py          # Cosmopedia v2 veri seti hazırlayıcı
-│   ├── train_custom_tokenizer.py       # Rust tabanlı Byte-Level BPE tokenizer eğiticisi
-│   ├── generate.py                     # Kayıtlı modellerle metin üretme arayüzü
-│   └── eval_suite.py                   # Otomatik değerlendirme test seti
-│
-├── src/                                # Çekirdek kütüphaneler
-│   ├── model.py                        # Saf PyTorch tensör Transformer mimarisi
-│   └── utils/                          # Logger ve Plotter araçları
-│
-├── web/                                # Gerçek zamanlı Cyberpunk telemetri Dashboard
-├── train_278m_phase2.py                # Aşama 2 Data-Mix eğitim betiği
-├── requirements.txt                    # Python bağımlılıkları
-└── README.md                           # Proje dokümantasyonu
-```
+Dorina projesi kapsamında eğitilmiş, optimize edilmiş ve kullanımda olan model envanteri:
+
+### 1. Dorina-V4 Amiral Gemisi (144.7M Dense SLM)
+> **Mimari:** 16 Layers, 768 Hidden Dim, 12 Q Heads, 4 KV Heads (3:1 GQA), 2560 SwiGLU MLP, RoPE, RMSNorm, 32.768 / 32.832 Vocab, 2048 Context.
+
+| Model / Checkpoint | Tür / Aşama | Token / Boyut | Açıklama & Yetenek |
+| :--- | :--- | :--- | :--- |
+| `dorina_v4_shard1_final.pt` | Pre-training Shard 1 | 0.5B Tokens (578 MB) | FineWeb-Edu temel İngilizce gramer ve kelime dizilimi. |
+| `dorina_v4_shard2_final.pt` | Pre-training Shard 2 | 1.0B Tokens (578 MB) | Olgusal tutarlılık ve cümle yapılarının oturması. |
+| `dorina_v4_shard3_final.pt` | Pre-training Shard 3 | 1.5B Tokens (578 MB) | Temel biyoloji, kimya ve genel dünya bilgisi. |
+| `dorina_v4_shard4_final.pt` | Pre-training Shard 4 | 2.0B Tokens (578 MB) | %35 FineWeb-Edu, %25 Python Edu, %25 TR-HQ, %15 FineMath. Kod ve Türkçe sıçraması. |
+| `dorina_v4_shard4_decayed.pt`| WSD Decay Shard 4 | 2.0B Tokens (578 MB) | Erken kristalleşme ve LR soğutma kontrol noktası. |
+| `dorina_v4_shard5_final.pt` | Pre-training Shard 5 | 2.5B Tokens (578 MB) | Yüksek kaliteli Türkçe ve mantıksal akıl yürütme sentezi. |
+| `dorina_v4_shard6_1to20_crystal_final.pt` | Pre-training Shard 6 | 3.0B Tokens (578 MB) | **3.0 Milyar token kristal taban.** Final Loss: ~1.46. 1:20 Chinchilla optimal omurga. |
+| `dorina_v4_3b_stable_momentum.pt` | Pre-training Full State | 3.0B Tokens (1.73 GB) | Model ağırlıkları + AdamW momentum & optimizer durumları (continual pre-train için). |
+| `dorina_v4_gold_sft_final.pt` | SFT Chat / Talimat | 32.832 Vocab (579 MB) | ChatML formatında Türkçe/İngilizce talimat ve çok turlu diyalog modeli. |
+| `dorina_v4_crystal_sft_best.pt` | SFT Ara Değerlendirme | 578 MB | Kristal taban üzerine en düşük doğrulama kaybı veren SFT kontrol noktası. |
+| `dorina_v4_android_agent.pt` | Mobil OS Ajanı (PyTorch) | 579 MB | Android sistem eylemlerini (ses, parlaklık, wifi, batarya, fener) çağıran JSON tool-call modeli. |
+| `dorina_v4_clean_agent.pt` | Mobil OS Ajanı (Sade) | 579 MB | Temizlenmiş ve optimize edilmiş Android asistan modeli. |
+| `dorina_v4_android_agent_f16.gguf` | Cihaz İçi Mobil Motor | 340 MB | llama.cpp / Termux / Android cihazlarda NPU/CPU üzerinde doğrudan koşan GGUF formatı. |
 
 ---
 
-## ⚙️ Donanım & Çalışma Ortamı
-
-* **GPU:** NVIDIA GeForce RTX 4050 Laptop GPU (6 GB GDDR6 VRAM)
-* **Hesaplama Mimarisi:** Ada Lovelace (Compute Capability 8.9)
-* **Hızlandırma:** FP16 Mixed Precision (`torch.cuda.amp`), Gradient Accumulation, RAM-Cached Binary Data Loader
-* **Kütüphaneler:** PyTorch (`torch`), OpenAI `tiktoken`, `tokenizers`, `matplotlib`, `numpy`
+### 2. Dorina Voice & Ses Modelleri
+| Model / Ağırlık | Mimari | Boyut | Açıklama |
+| :--- | :--- | :--- | :--- |
+| `dorina_tts_real.pt` / `prototype.pt` | FastPitch Mel Akustik Model | ~25.5 MB | Fonem ve metin dizgilerini mel-spektrograma dönüştüren vokal motoru. |
+| `dorina_hifigan_local_ckpt.pt` | HiFi-GAN Vocoder | 660 MB | Mel-spektrogramı doğrudan 22.05kHz doğal dalga formuna (.wav) çeviren nöral ses üretici. |
 
 ---
 
-## 🚀 Hızlı Başlangıç
+### 3. Dorina Nano & Hafif Uç Modeller
+| Model | Mimari / Parametre | Tokenizer | Görev |
+| :--- | :--- | :--- | :--- |
+| **Dorina Nano TR** | Hafif Dense (~10M-30M) | BPE 8K / 12K TR | Mobil klavye tahmini, Türkçe morfoloji ve ek denetimi. |
 
-### 1. Ortamın Hazırlanması
+---
+
+### 4. Tarihsel Arşiv & Prototipler
+| Sürüm / Model | Parametre | Detay |
+| :--- | :--- | :--- |
+| `dorina_44m_moe` (`releases/`) | 44.5M Sparse MoE | Erken dönem MoE araştırma modeli (4 Uzman Top-1, Switch/GShard). |
+| `v0.10 - v0.14` | 240K - 278M | Projenin ilk aşama araştırma prototipleri. |
+
+---
+
+## 💻 Canlı Etkileşim ve Çalıştırma
+
+### 1. Dorina-V4 ile Sohbet Etme
+
+Sohbet arayüzünü çalıştırmak için:
 
 ```powershell
-# Sanal ortamı aktive edin
-.venv\Scripts\activate
-
-# Bağımlılıkları yükleyin
-pip install -r requirements.txt
+python chat_dorina.py
 ```
 
-### 2. Metin Üretimi (Inference)
+### 2. Android OS Ajan Sunucusunu Başlatma
+
+Mobil asistan ile WiFi köprüsünü kurmak için:
 
 ```powershell
-# 278M Aşama 1 modelinden metin üretmek için:
-python scripts/generate.py --model releases/dorina_v0.14_278m/model.pt --prompt "The universe is full of mysteries because"
+python projects/dorinandroagi/dorina_bridge_server.py
 ```
 
-### 3. Gerçek Zamanlı Telemetri Dashboard'u
+### 3. Akıllı Klavye Testi
 
 ```powershell
-# Dashboard yerel sunucusunu başlatın:
-python web/serve_dashboard.py
+python projects/dorina_nano_keyboard/dorina_v4_keyboard_app.py
 ```
-Tarayıcınızdan `http://localhost:8000` adresine giderek eğitim kaybını, perplexity ve GPU sıcaklık/kullanım grafiklerini canlı takip edebilirsiniz.
+
+---
+
+## 📚 Dokümantasyon
+
+- [AI Training Handbook](AI_TRAINING_HANDBOOK.md): Büyük ölçekli model eğitimi, kristalleşme ve loss dinamikleri kılavuzu.
+- [AI Research Handbook](docs/AI_RESEARCH_HANDBOOK.md): Araştırma ve mimari tasarım notları.
+- [Projects Architecture Map](PROJECTS_MAP.md): Ekosistem dizin ve modül kılavuzu.
+- [Dorina-V4 Runs Log](models/dorina_v4/TRAINING_RUNS.md): Shard 1'den Shard 6'ya detaylı eğitim seyir defteri.

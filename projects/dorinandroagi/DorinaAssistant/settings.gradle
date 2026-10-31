@@ -1,0 +1,2 @@
+rootProject.name = "DorinaAssistant"
+include ':app'
